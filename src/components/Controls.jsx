@@ -1,6 +1,10 @@
+import DeckViewerButton from './DeckViewerButton.jsx'
+import GameMenu from './GameMenu.jsx'
 import './Controls.css'
 
-export default function Controls({ phase, canDeploy, hasPendingCard, onDraw, onEndTurn, onReset }) {
+export default function Controls({
+  phase, canDeploy, hasPendingCard, onDraw, onEndTurn, onReset, deck, deckOwnerLabel,
+}) {
   return (
     <div className="controls">
       {phase === 'battle' && (
@@ -13,7 +17,8 @@ export default function Controls({ phase, canDeploy, hasPendingCard, onDraw, onE
           End turn
         </button>
       )}
-      <button onClick={onReset}>Restart</button>
+      <DeckViewerButton deck={deck} label={deckOwnerLabel} />
+      <GameMenu onRestart={onReset} />
     </div>
   )
 }

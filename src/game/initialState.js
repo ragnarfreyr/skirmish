@@ -8,9 +8,9 @@ export function createInitialState() {
   ]
 
   const decks = { 1: buildDeck(), 2: buildDeck() }
-  const deck1 = decks[1].slice()
-  const pendingCard = deck1.shift()
-  decks[1] = deck1
+  const deck1 = decks[1]
+  const openingHand = deck1.slice(0, 3)
+  decks[1] = deck1.slice(3)
 
   return {
     units,
@@ -19,7 +19,9 @@ export function createInitialState() {
     deployingPlayer: 1,
     deployPlaced: 0,
     decks,
-    pendingCard,
+    openingHand,
+    selectedHandIndex: null,
+    pendingCard: null,
     deployedCount: { 1: 0, 2: 0 },
     hasDeployedThisTurn: false,
     deployCounter: 0,
@@ -27,6 +29,6 @@ export function createInitialState() {
     selectedId: null,
     gameOver: false,
     winText: '',
-    message: 'Player 1: drawing your opening units.',
+    message: 'Player 1: tap a unit below, then tap a tile in your zone to deploy it.',
   }
 }

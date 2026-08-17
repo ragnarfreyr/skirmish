@@ -2,6 +2,7 @@ import { useGameState } from './hooks/useGameState.js'
 import PlayerBar from './components/PlayerBar.jsx'
 import Board from './components/Board.jsx'
 import StatusBar from './components/StatusBar.jsx'
+import OpeningHand from './components/OpeningHand.jsx'
 import PendingCardPanel from './components/PendingCardPanel.jsx'
 import Controls from './components/Controls.jsx'
 import WinScreen from './components/WinScreen.jsx'
@@ -10,11 +11,15 @@ import './App.css'
 export default function App() {
   const {
     life, phase, deployingPlayer, deployPlaced, decks, pendingCard,
+    openingHand, selectedHandIndex,
     currentPlayer, selectedId, gameOver, winText, message,
-    units, reach, targets, placingZoneRows, manaP1, manaP2, canDeploy,
+    units, reach, targets, placingZoneRows, canPlaceCard, manaP1, manaP2, canDeploy,
     winOverlayDismissed,
-    handleCellTap, drawForBattle, endTurn, resetGame, dismissWinOverlay,
+    handleCellTap, drawForBattle, endTurn, resetGame, dismissWinOverlay, selectHandCard,
   } = useGameState()
+
+  const activeDeckPlayer = phase === 'deploy' ? deployingPlayer : currentPlayer
+  const activeDeckLabel = activeDeckPlayer === 1 ? 'Warlord (P1)' : 'Archmage (P2)'
 
   return (
     <div className="app">
@@ -26,7 +31,7 @@ export default function App() {
         units={units}
         reach={reach}
         targets={targets}
-        pendingCard={pendingCard}
+        canPlaceCard={canPlaceCard}
         placingZoneRows={placingZoneRows}
         selectedId={selectedId}
         onCellTap={handleCellTap}
@@ -42,7 +47,11 @@ export default function App() {
         message={message}
       />
 
-      <PendingCardPanel pendingCard={pendingCard} />
+      {phase === 'deploy' ? (
+        <OpeningHand hand={openingHand} selectedIndex={selectedHandIndex} onSelect={selectHandCard} />
+      ) : (
+        <PendingCardPanel pendingCard={pendingCard} />
+      )}
 
       <Controls
         phase={phase}
@@ -51,6 +60,8 @@ export default function App() {
         onDraw={drawForBattle}
         onEndTurn={endTurn}
         onReset={resetGame}
+        deck={decks[activeDeckPlayer]}
+        deckOwnerLabel={activeDeckLabel}
       />
 
       <WinScreen

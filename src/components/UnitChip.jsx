@@ -13,9 +13,16 @@ export default function UnitChip({ unit, selected }) {
     <div className={classes.join(' ')}>
       <div>{unit.name}</div>
       <div className="stats">
-        {unit.atk}/{unit.hp}
+        <span className="atk">
+          <span className="icon">⚔</span>{unit.atk}
+        </span>
+        <span className="hp">
+          <span className="icon">❤</span>{unit.hp}
+        </span>
       </div>
-      <div className="mana">{unit.mana}</div>
+      <div className="mana">
+        <span className="icon">⚡</span>{unit.mana}
+      </div>
       {unit.ranged && <div className="ranged-tag">RNG</div>}
     </div>
   )

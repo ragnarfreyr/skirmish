@@ -9,6 +9,7 @@ export function useGameState() {
   const [winOverlayDismissed, setWinOverlayDismissed] = useState(false)
   const {
     units, life, phase, deployingPlayer, deployPlaced, decks, pendingCard,
+    openingHand, selectedHandIndex,
     deployedCount, hasDeployedThisTurn, deployCounter, currentPlayer,
     selectedId, gameOver, winText, message,
   } = state
@@ -23,6 +24,7 @@ export function useGameState() {
   }
   const placingZoneRows =
     phase === 'deploy' ? HOME_ROWS[deployingPlayer] : pendingCard ? HOME_ROWS[currentPlayer] : []
+  const canPlaceCard = phase === 'deploy' ? selectedHandIndex !== null : !!pendingCard
 
   const manaP1 = units.filter((u) => u.owner === 1).reduce((s, u) => s + u.mana, 0)
   const manaP2 = units.filter((u) => u.owner === 2).reduce((s, u) => s + u.mana, 0)
@@ -38,6 +40,11 @@ export function useGameState() {
 
   function dismissWinOverlay() {
     setWinOverlayDismissed(true)
+  }
+
+  function selectHandCard(index) {
+    if (phase !== 'deploy') return
+    setState({ ...state, selectedHandIndex: index })
   }
 
   function endTurn() {
@@ -70,13 +77,14 @@ export function useGameState() {
   }
 
   function deployDuringSetup(row, col) {
-    const card = pendingCard
+    const card = openingHand[selectedHandIndex]
     const newCounter = deployCounter + 1
     const newUnit = makeUnit(
       `p${deployingPlayer}-${card.key}-${newCounter}`,
       deployingPlayer, card.name, card.mana, card.atk, card.hp, row, col, false, card.ranged,
     )
     let newUnits = [...units, newUnit]
+    const remainingHand = openingHand.filter((_, i) => i !== selectedHandIndex)
     let newDeployPlaced = deployPlaced + 1
     const newDeployedCount = {
       ...deployedCount,
@@ -85,7 +93,7 @@ export function useGameState() {
     let newDeployingPlayer = deployingPlayer
     let newPhase = phase
     let newDecks = decks
-    let newPendingCard = null
+    let newOpeningHand = remainingHand
     let newMessage = message
     let newCurrentPlayer = currentPlayer
 
@@ -93,20 +101,17 @@ export function useGameState() {
       if (deployingPlayer === 1) {
         newDeployingPlayer = 2
         newDeployPlaced = 0
-        const deck2 = decks[2].slice()
-        newPendingCard = deck2.shift() || null
-        newDecks = { ...decks, 2: deck2 }
-        newMessage = 'Player 2: drawing your opening units.'
+        const deck2 = decks[2]
+        newOpeningHand = deck2.slice(0, 3)
+        newDecks = { ...decks, 2: deck2.slice(3) }
+        newMessage = 'Player 2: tap a unit below, then tap a tile in your zone to deploy it.'
       } else {
         newPhase = 'battle'
         newCurrentPlayer = 1
         newUnits = refillMana(newUnits, 1)
+        newOpeningHand = []
         newMessage = "Battle begins! Player 1's turn."
       }
-    } else {
-      const deckX = decks[deployingPlayer].slice()
-      newPendingCard = deckX.shift() || null
-      newDecks = { ...decks, [deployingPlayer]: deckX }
     }
 
     setState({
@@ -116,7 +121,8 @@ export function useGameState() {
       deployingPlayer: newDeployingPlayer,
       phase: newPhase,
       decks: newDecks,
-      pendingCard: newPendingCard,
+      openingHand: newOpeningHand,
+      selectedHandIndex: null,
       deployedCount: newDeployedCount,
       deployCounter: newCounter,
       currentPlayer: newCurrentPlayer,
@@ -227,7 +233,7 @@ export function useGameState() {
     if (gameOver) return
 
     if (phase === 'deploy') {
-      if (!pendingCard) return
+      if (selectedHandIndex === null) return
       if (!HOME_ROWS[deployingPlayer].includes(row) || unitAt(units, row, col)) return
       deployDuringSetup(row, col)
       return
@@ -283,9 +289,10 @@ export function useGameState() {
 
   return {
     units, life, phase, deployingPlayer, deployPlaced, decks, pendingCard,
+    openingHand, selectedHandIndex,
     currentPlayer, selectedId, gameOver, winText, message,
-    reach, targets, placingZoneRows, manaP1, manaP2, canDeploy,
+    reach, targets, placingZoneRows, canPlaceCard, manaP1, manaP2, canDeploy,
     winOverlayDismissed,
-    handleCellTap, drawForBattle, endTurn, resetGame, dismissWinOverlay,
+    handleCellTap, drawForBattle, endTurn, resetGame, dismissWinOverlay, selectHandCard,
   }
 }

@@ -16,16 +16,20 @@
 .unit.hero { border-width: 3px; }
 .unit.selected { outline: 2px solid #ffd24a; outline-offset: 1px; }
 .unit.sick { opacity: 0.6; }
-.unit .stats { font-size: 9px; font-weight: 400; opacity: 0.85; margin-top: 1px; }
+.unit .stats {
+  display: flex; gap: 5px; font-size: 9px; font-weight: 400; opacity: 0.85; margin-top: 1px;
+}
+.unit .stats .icon { font-size: 8px; margin-right: 1px; }
 .unit .ranged-tag {
   position: absolute; bottom: -4px; left: -4px; background: #ffd24a; color: #14161a;
   border-radius: 4px; font-size: 7px; padding: 1px 3px; font-weight: 700;
 }
 .unit .mana {
   position: absolute; top: -4px; right: -4px; background: #ffd24a; color: #14161a;
-  border-radius: 50%; width: 16px; height: 16px; font-size: 9px; display: flex;
+  border-radius: 50%; width: 18px; height: 18px; font-size: 8px; display: flex;
   align-items: center; justify-content: center; font-weight: 700; z-index: 2;
 }
+.unit .mana .icon { font-size: 7px; margin-right: 1px; }
 
 @keyframes pulseAttack { 0% { transform: scale(1); } 50% { transform: scale(1.18); } 100% { transform: scale(1); } }
 @keyframes flashHit {
