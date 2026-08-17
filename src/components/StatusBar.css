@@ -1,0 +1,6 @@
+.turn-label { text-align: center; font-size: 12px; color: #999; margin-bottom: 8px; }
+
+.panel {
+  max-width: 480px; margin: 10px auto 0; background: #1e2127; border-radius: 10px;
+  padding: 10px 12px; font-size: 13px; color: #bbb; min-height: 20px;
+}

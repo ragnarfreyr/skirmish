@@ -1,0 +1,18 @@
+.win-banner {
+  position: fixed; inset: 0; background: rgba(0, 0, 0, 0.85);
+  display: flex; align-items: center; justify-content: center; flex-direction: column;
+  z-index: 16; padding: 20px; text-align: center;
+}
+.win-banner h2 { font-size: 22px; margin-bottom: 16px; }
+.win-actions { display: flex; flex-direction: column; gap: 10px; align-items: center; }
+.win-banner button { width: 200px; padding: 14px; }
+.win-banner button.secondary { background: transparent; border: 1px solid #666; color: #ccc; }
+
+.win-recap {
+  position: fixed; left: 0; right: 0; bottom: 0; z-index: 12;
+  display: flex; align-items: center; justify-content: space-between; gap: 10px;
+  background: rgba(20, 22, 26, 0.96); border-top: 1px solid #333;
+  padding: 10px 14px calc(10px + env(safe-area-inset-bottom));
+}
+.win-recap span { font-size: 13px; font-weight: 600; }
+.win-recap button { flex: none; padding: 10px 16px; background: #3a4a6b; }

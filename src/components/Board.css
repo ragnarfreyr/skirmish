@@ -1,0 +1,24 @@
+.board {
+  display: grid;
+  grid-template-columns: repeat(6, 1fr);
+  gap: 3px;
+  background: #0c0d10;
+  padding: 5px;
+  border-radius: 10px;
+  max-width: 480px;
+  margin: 0 auto;
+}
+
+.cell {
+  aspect-ratio: 1;
+  background: #22262e;
+  border-radius: 6px;
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: visible;
+}
+.cell.moveable { background: #1b3a2a; }
+.cell.attackable { background: #3a1b1e; }
+.cell.placeable { background: #1b3a2a; }

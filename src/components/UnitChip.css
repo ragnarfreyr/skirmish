@@ -1,0 +1,42 @@
+.unit {
+  width: 88%;
+  height: 88%;
+  border-radius: 6px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  font-size: 10px;
+  font-weight: 600;
+  border: 2px solid transparent;
+  position: relative;
+}
+.unit.p1 { background: #1f3654; color: #8fc2ff; border-color: #4a90d9; }
+.unit.p2 { background: #4a1f26; color: #ff9ba6; border-color: #d94a5c; }
+.unit.hero { border-width: 3px; }
+.unit.selected { outline: 2px solid #ffd24a; outline-offset: 1px; }
+.unit.sick { opacity: 0.6; }
+.unit .stats { font-size: 9px; font-weight: 400; opacity: 0.85; margin-top: 1px; }
+.unit .ranged-tag {
+  position: absolute; bottom: -4px; left: -4px; background: #ffd24a; color: #14161a;
+  border-radius: 4px; font-size: 7px; padding: 1px 3px; font-weight: 700;
+}
+.unit .mana {
+  position: absolute; top: -4px; right: -4px; background: #ffd24a; color: #14161a;
+  border-radius: 50%; width: 16px; height: 16px; font-size: 9px; display: flex;
+  align-items: center; justify-content: center; font-weight: 700; z-index: 2;
+}
+
+@keyframes pulseAttack { 0% { transform: scale(1); } 50% { transform: scale(1.18); } 100% { transform: scale(1); } }
+@keyframes flashHit {
+  0% { box-shadow: 0 0 0 0 rgba(255, 60, 60, 0.95); }
+  100% { box-shadow: 0 0 0 10px rgba(255, 60, 60, 0); }
+}
+@keyframes destroyPop {
+  0% { transform: scale(1) rotate(0); opacity: 1; }
+  35% { transform: scale(1.25) rotate(-6deg); opacity: 1; }
+  100% { transform: scale(0.15) rotate(20deg); opacity: 0; }
+}
+.unit.attacking { animation: pulseAttack 0.3s ease; }
+.unit.hit { animation: flashHit 0.35s ease; }
+.unit.dying { animation: destroyPop 0.5s ease forwards; z-index: 3; }
