@@ -5,6 +5,8 @@ import { createInitialState } from './game/initialState.js'
 
 export default function App() {
   const [state, setState] = useState(createInitialState)
+  // Starts false so the celebration overlay shows the instant a game is won; "View board" flips it.
+  const [winOverlayDismissed, setWinOverlayDismissed] = useState(false)
   const {
     units, life, phase, deployingPlayer, deployPlaced, decks, pendingCard,
     deployedCount, hasDeployedThisTurn, deployCounter, currentPlayer,
@@ -31,6 +33,7 @@ export default function App() {
   // ---- actions ----
   function resetGame() {
     setState(createInitialState())
+    setWinOverlayDismissed(false)
   }
 
   function endTurn() {
@@ -353,12 +356,62 @@ export default function App() {
         <button onClick={resetGame}>Restart</button>
       </div>
 
-      {gameOver && (
-        <div className="win-banner show">
-          <h2>{winText}</h2>
+      {gameOver && !winOverlayDismissed && (
+        <>
+          <Confetti />
+          <div className="win-banner show">
+            <h2>{winText}</h2>
+            <div className="win-actions">
+              <button onClick={resetGame}>Play again</button>
+              <button className="secondary" onClick={() => setWinOverlayDismissed(true)}>
+                View board
+              </button>
+            </div>
+          </div>
+        </>
+      )}
+
+      {gameOver && winOverlayDismissed && (
+        <div className="win-recap">
+          <span>{winText}</span>
           <button onClick={resetGame}>Play again</button>
         </div>
       )}
+    </div>
+  )
+}
+
+const CONFETTI_COLORS = ['#ffd24a', '#4a90d9', '#d94a5c', '#5ad98f', '#c98fff']
+
+function Confetti() {
+  const [pieces] = useState(() =>
+    Array.from({ length: 80 }, (_, i) => ({
+      id: i,
+      left: Math.random() * 100,
+      delay: Math.random() * 0.5,
+      duration: 2.2 + Math.random() * 1.4,
+      color: CONFETTI_COLORS[i % CONFETTI_COLORS.length],
+      rotate: Math.round(Math.random() * 360),
+      drift: Math.round((Math.random() - 0.5) * 140),
+    })),
+  )
+
+  return (
+    <div className="confetti" aria-hidden="true">
+      {pieces.map((p) => (
+        <span
+          key={p.id}
+          className="confetti-piece"
+          style={{
+            left: `${p.left}%`,
+            backgroundColor: p.color,
+            animationDelay: `${p.delay}s`,
+            animationDuration: `${p.duration}s`,
+            '--drift': `${p.drift}px`,
+            '--rotate': `${p.rotate}deg`,
+          }}
+        />
+      ))}
     </div>
   )
 }
