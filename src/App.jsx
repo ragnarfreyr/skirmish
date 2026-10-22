@@ -6,6 +6,7 @@ import OpeningHand from './components/OpeningHand.jsx'
 import PendingCardPanel from './components/PendingCardPanel.jsx'
 import Controls from './components/Controls.jsx'
 import WinScreen from './components/WinScreen.jsx'
+import TurnBanner from './components/TurnBanner.jsx'
 import './App.css'
 
 export default function App() {
@@ -14,7 +15,7 @@ export default function App() {
     openingHand, selectedHandIndex,
     currentPlayer, selectedId, gameOver, winText, message,
     units, reach, targets, placingZoneRows, canPlaceCard, manaP1, manaP2, canDeploy,
-    winOverlayDismissed,
+    winOverlayDismissed, gameId, lastEvent,
     handleCellTap, drawForBattle, endTurn, resetGame, dismissWinOverlay, selectHandCard,
   } = useGameState()
 
@@ -23,11 +24,18 @@ export default function App() {
 
   return (
     <div className="app">
-      <h1>Skirmish — pass and play prototype</h1>
+      <h1>
+        Skirmish <span className="h1-sub">pass &amp; play prototype</span>
+      </h1>
 
-      <PlayerBar player={2} name="Archmage (P2)" life={life[2]} mana={manaP2} deckCount={decks[2].length} />
+      <PlayerBar
+        player={2} name="Archmage (P2)" life={life[2]} mana={manaP2} deckCount={decks[2].length}
+        active={!gameOver && activeDeckPlayer === 2}
+      />
 
       <Board
+        key={gameId}
+        lastEvent={lastEvent}
         units={units}
         reach={reach}
         targets={targets}
@@ -37,7 +45,10 @@ export default function App() {
         onCellTap={handleCellTap}
       />
 
-      <PlayerBar player={1} name="Warlord (P1)" life={life[1]} mana={manaP1} deckCount={decks[1].length} />
+      <PlayerBar
+        player={1} name="Warlord (P1)" life={life[1]} mana={manaP1} deckCount={decks[1].length}
+        active={!gameOver && activeDeckPlayer === 1}
+      />
 
       <StatusBar
         phase={phase}
@@ -48,7 +59,7 @@ export default function App() {
       />
 
       {phase === 'deploy' ? (
-        <OpeningHand hand={openingHand} selectedIndex={selectedHandIndex} onSelect={selectHandCard} />
+        <OpeningHand player={deployingPlayer} hand={openingHand} selectedIndex={selectedHandIndex} onSelect={selectHandCard} />
       ) : (
         <PendingCardPanel pendingCard={pendingCard} />
       )}
@@ -63,6 +74,8 @@ export default function App() {
         deck={decks[activeDeckPlayer]}
         deckOwnerLabel={activeDeckLabel}
       />
+
+      <TurnBanner key={`banner-${gameId}`} phase={phase} player={activeDeckPlayer} gameOver={gameOver} />
 
       <WinScreen
         gameOver={gameOver}

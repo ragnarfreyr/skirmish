@@ -13,6 +13,8 @@ export function createInitialState() {
   decks[1] = deck1.slice(3)
 
   return {
+    gameId: Date.now(), // changes on restart so the board can replay its intro
+    lastEvent: null, // most recent attack / breakthrough, read by the board to play effects
     units,
     life: { 1: 20, 2: 20 },
     phase: 'deploy', // 'deploy' | 'battle'

@@ -1,8 +1,29 @@
-.pending-wrap { max-width: 480px; margin: 10px auto 0; }
-.pending-label { font-size: 12px; color: #999; margin-bottom: 6px; text-align: center; }
+.pending-wrap { max-width: 480px; margin: 12px auto 0; perspective: 600px; }
+.pending-label { font-size: 12px; color: #999; margin-bottom: 8px; text-align: center; }
 .deploy-card {
-  background: #1e2127; border: 2px solid #ffd24a; border-radius: 10px;
-  padding: 10px; font-size: 13px; text-align: center; max-width: 200px; margin: 0 auto;
+  background: #2a2716;
+  border: 2px solid var(--gold);
+  border-radius: 12px;
+  padding: 12px;
+  text-align: center;
+  max-width: 200px;
+  margin: 0 auto;
+  box-shadow: 0 5px 0 #6b5409, 0 0 22px rgba(255, 210, 74, 0.35);
+  /* Drawn from the deck: flip over and slam down, then float while waiting. */
+  animation:
+    cardDraw 800ms var(--spring-bouncy),
+    cardFloat 2.2s ease-in-out 800ms infinite;
 }
-.deploy-card .dname { font-weight: 600; margin-bottom: 4px; font-size: 14px; }
-.deploy-card .dstats { color: #ccc; font-size: 12px; }
+.deploy-card .dname { font-family: var(--font-display); font-size: 18px; margin-bottom: 6px; }
+.deploy-card .dstats { display: flex; justify-content: center; gap: 10px; color: #ddd; font-size: 13px; font-weight: 600; }
+.deploy-card .d-mana { color: var(--gold); }
+
+@keyframes cardDraw {
+  0% { transform: translateY(60px) rotateY(180deg) scale(0.4); opacity: 0; }
+  40% { opacity: 1; }
+  100% { transform: translateY(0) rotateY(0) scale(1); opacity: 1; }
+}
+@keyframes cardFloat {
+  0%, 100% { transform: translateY(0) rotate(-1deg); }
+  50% { transform: translateY(-5px) rotate(1deg); }
+}

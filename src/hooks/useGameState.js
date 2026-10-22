@@ -3,6 +3,10 @@ import { ROWS, HOME_ROWS, MAX_UNITS } from '../game/constants.js'
 import { makeUnit, unitAt, bfsReachable, attackableTargets, refillMana } from '../game/rules.js'
 import { createInitialState } from '../game/initialState.js'
 
+// How long a destroyed unit stays on the board so its death animation can finish.
+// Keep in sync with the .unit.dying animation (delay + duration) in UnitChip.css.
+const DEATH_CLEANUP_MS = 940
+
 export function useGameState() {
   const [state, setState] = useState(createInitialState)
   // Starts false so the celebration overlay shows the instant a game is won; "View board" flips it.
@@ -11,7 +15,7 @@ export function useGameState() {
     units, life, phase, deployingPlayer, deployPlaced, decks, pendingCard,
     openingHand, selectedHandIndex,
     deployedCount, hasDeployedThisTurn, deployCounter, currentPlayer,
-    selectedId, gameOver, winText, message,
+    selectedId, gameOver, winText, message, gameId, lastEvent,
   } = state
 
   // ---- derived / computed values for rendering ----
@@ -164,6 +168,7 @@ export function useGameState() {
     )
     let newLife = life
     let msg = message
+    let event = lastEvent
     const enemyBackRow = unit.owner === 1 ? 0 : ROWS - 1
     if (!unit.isHero && !unit.breached && row === enemyBackRow) {
       newUnits = newUnits.map((u) => (u.id === unit.id ? { ...u, breached: true } : u))
@@ -172,8 +177,9 @@ export function useGameState() {
       msg = `${unit.name} broke through! ${
         enemy === 1 ? "Warlord's" : "Archmage's"
       } side takes 4 damage. (Life is a pressure score — only defeating the hero wins.)`
+      event = { id: Math.random(), type: 'breach', unitId: unit.id, row, col, dmg: 4, distance: cost }
     }
-    setState({ ...state, units: newUnits, life: newLife, message: msg })
+    setState({ ...state, units: newUnits, life: newLife, message: msg, lastEvent: event })
   }
 
   function performAttack(attacker, defender) {
@@ -199,9 +205,24 @@ export function useGameState() {
       ...state,
       units: newUnits,
       message: `${attacker.name}${attacker.ranged ? ' shoots ' : ' attacks '}${defender.name}.`,
+      // Everything the board needs to choreograph the clash (lunge, projectile, numbers, shake).
+      lastEvent: {
+        id: Math.random(),
+        type: 'attack',
+        attackerId: attacker.id,
+        defenderId: defender.id,
+        from: { row: attacker.row, col: attacker.col },
+        to: { row: defender.row, col: defender.col },
+        ranged: attacker.ranged,
+        dmg: attacker.atk,
+        retaliation: retaliates ? defender.atk : 0,
+        attackerDies: attackerDying,
+        defenderDies: defenderDying,
+      },
     })
 
-    // Let the hit/dying animation play, then remove destroyed units and check for a winner.
+    // Let the lunge, hit and death animations play out (see DEATH_CLEANUP_MS), then
+    // remove destroyed units and check for a winner.
     setTimeout(() => {
       setState((prev) => {
         const survivors = prev.units.filter((u) => !u.dying)
@@ -226,7 +247,7 @@ export function useGameState() {
           winText: winTextNext,
         }
       })
-    }, 500)
+    }, DEATH_CLEANUP_MS)
   }
 
   function handleCellTap(row, col) {
@@ -292,7 +313,7 @@ export function useGameState() {
     openingHand, selectedHandIndex,
     currentPlayer, selectedId, gameOver, winText, message,
     reach, targets, placingZoneRows, canPlaceCard, manaP1, manaP2, canDeploy,
-    winOverlayDismissed,
+    winOverlayDismissed, gameId, lastEvent,
     handleCellTap, drawForBattle, endTurn, resetGame, dismissWinOverlay, selectHandCard,
   }
 }

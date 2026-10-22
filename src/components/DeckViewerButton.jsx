@@ -1,8 +1,10 @@
 import { useState } from 'react'
+import { usePresence } from '../fx/usePresence.js'
 import './DeckViewerButton.css'
 
 export default function DeckViewerButton({ deck, label }) {
   const [open, setOpen] = useState(false)
+  const { render, closing } = usePresence(open, 200)
 
   const counts = []
   const indexByName = {}
@@ -20,8 +22,8 @@ export default function DeckViewerButton({ deck, label }) {
       <button type="button" className="deck-btn" onClick={() => setOpen(true)} aria-label="View deck">
         🂠
       </button>
-      {open && (
-        <div className="deck-modal-overlay" onClick={() => setOpen(false)}>
+      {render && (
+        <div className={`deck-modal-overlay${closing ? ' closing' : ''}`} onClick={() => setOpen(false)}>
           <div className="deck-modal" onClick={(e) => e.stopPropagation()}>
             <div className="deck-modal-header">
               <h3>
@@ -33,8 +35,8 @@ export default function DeckViewerButton({ deck, label }) {
             </div>
             <div className="deck-list">
               {counts.length === 0 && <div className="deck-empty">No cards left.</div>}
-              {counts.map((card) => (
-                <div className="deck-row" key={card.name}>
+              {counts.map((card, i) => (
+                <div className="deck-row" key={card.name} style={{ '--i': i }}>
                   <span className="deck-row-name">
                     {card.name}
                     {card.ranged ? ' (RNG)' : ''}

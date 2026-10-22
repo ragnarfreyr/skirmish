@@ -6,13 +6,16 @@ export default function PendingCardPanel({ pendingCard }) {
   return (
     <div className="pending-wrap">
       <div className="pending-label">Tap an empty tile in your zone to place:</div>
-      <div className="deploy-card">
+      {/* Keyed by card so each new draw flips in fresh. */}
+      <div className="deploy-card" key={pendingCard.uid ?? pendingCard.name}>
         <div className="dname">
           {pendingCard.name}
           {pendingCard.ranged ? ' (RNG)' : ''}
         </div>
         <div className="dstats">
-          {pendingCard.mana} mana &nbsp;•&nbsp; {pendingCard.atk} atk / {pendingCard.hp} hp
+          <span className="d-mana">⚡{pendingCard.mana}</span>
+          <span>⚔{pendingCard.atk}</span>
+          <span>❤{pendingCard.hp}</span>
         </div>
       </div>
     </div>

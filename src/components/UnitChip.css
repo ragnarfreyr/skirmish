@@ -1,7 +1,43 @@
-.unit {
+/* ---- Layer 1: position on the grid. Springs from tile to tile. ---- */
+.unit-slot {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: calc((100% - 5 * var(--gap)) / 6);
+  aspect-ratio: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transform: translate(calc(var(--col) * (100% + var(--gap))), calc(var(--row) * (100% + var(--gap))));
+  transition-property: transform;
+  transition-timing-function: var(--spring-snappy);
+  z-index: 1;
+}
+.unit-slot.is-dying { z-index: 4; }
+
+/* ---- Layer 2: selection lift + idle breathing. ---- */
+.unit-bob {
   width: 88%;
   height: 88%;
-  border-radius: 6px;
+  translate: 0 0;
+  transition: translate 450ms var(--spring-jelly), filter 200ms;
+}
+.unit-bob.selected {
+  translate: 0 -6px;
+  animation: breathe 1.1s ease-in-out infinite;
+  filter: drop-shadow(0 8px 6px rgba(0, 0, 0, 0.55));
+}
+.unit-slot:has(.selected) { z-index: 3; }
+@keyframes breathe {
+  0%, 100% { scale: 1.06 1.06; }
+  50% { scale: 1.1 1.0; }
+}
+
+/* ---- Layer 3: the chip itself. ---- */
+.unit {
+  width: 100%;
+  height: 100%;
+  border-radius: 8px;
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -10,37 +46,78 @@
   font-weight: 600;
   border: 2px solid transparent;
   position: relative;
+  transform-origin: 50% 100%; /* squash against the floor, not the middle */
+  transition: opacity 300ms, filter 300ms;
 }
-.unit.p1 { background: #1f3654; color: #8fc2ff; border-color: #4a90d9; }
-.unit.p2 { background: #4a1f26; color: #ff9ba6; border-color: #d94a5c; }
+.unit-name { font-family: var(--font-display); font-weight: 400; font-size: 10.5px; letter-spacing: 0.2px; }
+.unit.p1 {
+  background: linear-gradient(180deg, #2a4a72 0%, #1f3654 100%);
+  color: #a9d1ff;
+  border-color: var(--p1);
+  box-shadow: inset 0 2px 0 rgba(255, 255, 255, 0.14), 0 3px 0 var(--p1-deep);
+}
+.unit.p2 {
+  background: linear-gradient(180deg, #642a33 0%, #4a1f26 100%);
+  color: #ffb3bc;
+  border-color: var(--p2);
+  box-shadow: inset 0 2px 0 rgba(255, 255, 255, 0.14), 0 3px 0 var(--p2-deep);
+}
 .unit.hero { border-width: 3px; }
-.unit.selected { outline: 2px solid #ffd24a; outline-offset: 1px; }
-.unit.sick { opacity: 0.6; }
+.unit.hero::before {
+  content: '♛';
+  position: absolute;
+  top: -9px;
+  left: 50%;
+  translate: -50% 0;
+  font-size: 11px;
+  color: var(--gold);
+  text-shadow: 0 1px 0 #6b4f00;
+}
+.unit-bob.selected .unit {
+  outline: 2px solid var(--gold);
+  outline-offset: 2px;
+}
+.unit.sick { opacity: 0.6; filter: saturate(0.5); }
+.unit.spent { filter: saturate(0.55) brightness(0.85); }
+
 .unit .stats {
-  display: flex; gap: 5px; font-size: 9px; font-weight: 400; opacity: 0.85; margin-top: 1px;
+  display: flex; gap: 5px; font-size: 9px; font-weight: 400; opacity: 0.9; margin-top: 1px;
 }
 .unit .stats .icon { font-size: 8px; margin-right: 1px; }
+.unit .stats .hp { display: inline-block; animation: bump 600ms var(--spring-jelly) 170ms backwards; }
+
 .unit .ranged-tag {
-  position: absolute; bottom: -4px; left: -4px; background: #ffd24a; color: #14161a;
+  position: absolute; bottom: -4px; left: -4px; background: var(--gold); color: #14161a;
   border-radius: 4px; font-size: 7px; padding: 1px 3px; font-weight: 700;
 }
 .unit .mana {
-  position: absolute; top: -4px; right: -4px; background: #ffd24a; color: #14161a;
+  position: absolute; top: -5px; right: -5px; background: var(--gold); color: #14161a;
   border-radius: 50%; width: 18px; height: 18px; font-size: 8px; display: flex;
   align-items: center; justify-content: center; font-weight: 700; z-index: 2;
+  box-shadow: 0 2px 0 var(--gold-deep);
+  animation: bump 600ms var(--spring-jelly);
 }
 .unit .mana .icon { font-size: 7px; margin-right: 1px; }
 
-@keyframes pulseAttack { 0% { transform: scale(1); } 50% { transform: scale(1.18); } 100% { transform: scale(1); } }
-@keyframes flashHit {
-  0% { box-shadow: 0 0 0 0 rgba(255, 60, 60, 0.95); }
-  100% { box-shadow: 0 0 0 10px rgba(255, 60, 60, 0); }
+.unit .zzz {
+  position: absolute; top: -6px; left: 2px; font-family: var(--font-display);
+  font-size: 11px; color: #cfd8ff; animation: snooze 1.6s ease-in-out infinite;
 }
-@keyframes destroyPop {
-  0% { transform: scale(1) rotate(0); opacity: 1; }
-  35% { transform: scale(1.25) rotate(-6deg); opacity: 1; }
-  100% { transform: scale(0.15) rotate(20deg); opacity: 0; }
+@keyframes snooze {
+  0% { transform: translate(0, 4px) scale(0.6); opacity: 0; }
+  40% { opacity: 1; }
+  100% { transform: translate(-6px, -10px) scale(1.1); opacity: 0; }
 }
-.unit.attacking { animation: pulseAttack 0.3s ease; }
-.unit.hit { animation: flashHit 0.35s ease; }
-.unit.dying { animation: destroyPop 0.5s ease forwards; z-index: 3; }
+
+/* Death: flash white, swell, then spin away to nothing. Starts after the lunge and the
+   blow land (360ms); DEATH_CLEANUP_MS in useGameState.js must cover delay + duration. */
+.unit.dying {
+  animation: deathPop 540ms cubic-bezier(0.5, 0, 0.75, 0) 360ms forwards;
+  transform-origin: 50% 50%;
+}
+@keyframes deathPop {
+  0% { transform: scale(1); filter: brightness(1); }
+  18% { transform: scale(1.4, 1.25) rotate(-8deg); filter: brightness(3) saturate(0); }
+  40% { transform: scale(1.25) rotate(-4deg); filter: brightness(1.6); opacity: 1; }
+  100% { transform: scale(0) rotate(40deg); filter: brightness(1); opacity: 0; }
+}

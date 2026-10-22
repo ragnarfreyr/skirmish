@@ -1,2 +1,4 @@
-.controls { max-width: 480px; margin: 10px auto 0; display: flex; gap: 8px; }
-.end-turn { background: #3a4a6b; }
+.controls { max-width: 480px; margin: 14px auto 0; display: flex; gap: 8px; }
+.controls .draw { --btn-bg: #3d7a4f; --btn-lip: #1f4a2b; }
+.controls .end-turn { --btn-bg: #3a5c9a; --btn-lip: #1f3560; }
+.controls .pop-in { animation: popIn 520ms var(--spring-jelly); }

@@ -19,6 +19,7 @@ export function buildDeck() {
   UNIT_DEFS.forEach((def) => {
     for (let i = 0; i < def.copies; i++) {
       deck.push({
+        uid: `${def.key}-${i}`, // stable identity so the UI can animate each card
         key: def.key,
         name: def.name,
         mana: def.mana,

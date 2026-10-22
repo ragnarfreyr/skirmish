@@ -1,24 +1,146 @@
-.board {
-  display: grid;
-  grid-template-columns: repeat(6, 1fr);
-  gap: 3px;
-  background: #0c0d10;
-  padding: 5px;
-  border-radius: 10px;
+.board-shake {
   max-width: 480px;
   margin: 0 auto;
+  will-change: transform;
+}
+
+.board {
+  --gap: 3px;
+  display: grid;
+  grid-template-columns: repeat(6, 1fr);
+  gap: var(--gap);
+  background: #0c0d10;
+  padding: 5px;
+  border-radius: 14px;
+  position: relative;
+  box-shadow: 0 6px 0 #07080a, 0 14px 30px rgba(0, 0, 0, 0.45);
 }
 
 .cell {
   aspect-ratio: 1;
   background: #22262e;
-  border-radius: 6px;
+  border-radius: 7px;
   position: relative;
+  box-shadow: inset 0 -3px 0 rgba(0, 0, 0, 0.25);
+  transition: transform 380ms var(--spring-jelly), background 200ms;
+}
+.cell:active { transform: scale(0.88); transition-duration: 60ms; }
+.cell.zone { background: #252a33; }
+
+/* Highlights live on ::after so they can pop in without moving the tile.
+   --d (distance from the selected unit) staggers them into a ripple. */
+.cell::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  opacity: 0;
+  pointer-events: none;
+}
+.cell.moveable::after,
+.cell.attackable::after,
+.cell.placeable::after {
+  opacity: 1;
+  animation: cellPop 520ms var(--spring-bouncy) calc(var(--d) * 45ms) backwards;
+}
+.cell.moveable::after {
+  background: radial-gradient(circle, #5ad98f 0 13%, transparent 15%), #1b3a2a;
+  box-shadow: inset 0 0 0 2px rgba(90, 217, 143, 0.35);
+}
+.cell.attackable::after {
+  background: radial-gradient(circle, transparent 0 44%, rgba(255, 90, 100, 0.85) 46% 52%, transparent 54%), #3a1b1e;
+  box-shadow: inset 0 0 0 2px rgba(255, 90, 100, 0.5);
+  animation:
+    cellPop 520ms var(--spring-bouncy) calc(var(--d) * 45ms) backwards,
+    targetPulse 900ms ease-in-out calc(var(--d) * 45ms + 520ms) infinite;
+  z-index: 2; /* crosshair draws over the enemy chip */
+  background-color: transparent;
+}
+.cell.placeable::after {
+  background: #1b3a2a;
+  box-shadow: inset 0 0 0 2px rgba(255, 210, 74, 0.45);
+  animation:
+    cellPop 520ms var(--spring-bouncy) calc(var(--d) * 45ms) backwards,
+    zoneBreathe 1.4s ease-in-out calc(var(--d) * 90ms) infinite;
+}
+
+@keyframes cellPop {
+  0% { transform: scale(0); opacity: 0; }
+  100% { transform: scale(1); opacity: 1; }
+}
+@keyframes targetPulse {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(0.84); }
+}
+@keyframes zoneBreathe {
+  0%, 100% { box-shadow: inset 0 0 0 2px rgba(255, 210, 74, 0.25); }
+  50% { box-shadow: inset 0 0 0 3px rgba(255, 210, 74, 0.75); }
+}
+
+/* Units sit in their own layer on top of the grid so they can slide between tiles.
+   Taps pass through to the cells underneath. */
+.units-layer {
+  position: absolute;
+  inset: 5px;
+  pointer-events: none;
+}
+.fx-layer {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  z-index: 10;
+}
+
+/* Floating damage numbers, bolts and sparks share the unit grid's coordinates. */
+.fx-text,
+.fx-bolt,
+.fx-spark {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: calc((100% - 5 * var(--gap)) / 6);
+  aspect-ratio: 1;
+  translate: calc(var(--col) * (100% + var(--gap))) calc(var(--row) * (100% + var(--gap)));
   display: flex;
   align-items: center;
   justify-content: center;
-  overflow: visible;
+  pointer-events: none;
 }
-.cell.moveable { background: #1b3a2a; }
-.cell.attackable { background: #3a1b1e; }
-.cell.placeable { background: #1b3a2a; }
+.fx-text {
+  font-family: var(--font-display);
+  font-size: 22px;
+  color: #fff;
+  text-shadow: 0 2px 0 #b3001b, 0 0 8px rgba(255, 40, 60, 0.8), 2px 0 0 #b3001b, -2px 0 0 #b3001b, 0 -2px 0 #b3001b;
+  z-index: 2;
+}
+.fx-text.big { font-size: 30px; }
+.fx-text.breach {
+  font-size: 20px;
+  white-space: nowrap;
+  color: var(--gold);
+  text-shadow: 0 3px 0 #7a5200, 2px 0 0 #7a5200, -2px 0 0 #7a5200, 0 -2px 0 #7a5200, 0 0 14px rgba(255, 200, 40, 0.9);
+}
+.fx-bolt::before {
+  content: '';
+  width: 26px;
+  height: 5px;
+  border-radius: 3px;
+  background: linear-gradient(90deg, transparent, #fff3b0 40%, #fff);
+  box-shadow: 0 0 10px 2px rgba(255, 220, 120, 0.9);
+}
+.fx-spark::before {
+  content: '';
+  width: 7px;
+  height: 7px;
+  border-radius: 2px;
+  background: var(--gold);
+  box-shadow: 0 0 6px rgba(255, 210, 74, 0.9);
+}
+/* The breakthrough callout spans the whole row so it never gets clipped at the edges. */
+.fx-text.breach {
+  width: 100%;
+  aspect-ratio: auto;
+  height: calc((100% - 5 * var(--gap)) / 6);
+  translate: 0 calc(var(--row) * (100% + var(--gap)));
+  font-size: 26px;
+}

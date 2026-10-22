@@ -1,21 +1,33 @@
 .deck-btn {
-  flex: none; width: 44px; padding: 0; font-size: 18px; display: flex;
+  flex: none; width: 48px; padding: 0; font-size: 18px; display: flex;
   align-items: center; justify-content: center;
 }
 
 .deck-modal-overlay {
   position: fixed; inset: 0; background: rgba(0, 0, 0, 0.7); z-index: 20;
   display: flex; align-items: center; justify-content: center; padding: 16px;
+  animation: fadeIn 200ms ease-out;
 }
+.deck-modal-overlay.closing { animation: fadeOut 200ms ease-in forwards; }
 .deck-modal {
   background: #1e2127; border-radius: 12px; max-width: 420px; width: 100%;
   max-height: 80vh; display: flex; flex-direction: column; overflow: hidden;
+  box-shadow: 0 6px 0 #0d0f12, 0 20px 40px rgba(0, 0, 0, 0.5);
+  animation: modalIn 600ms var(--spring-jelly);
+}
+.deck-modal-overlay.closing .deck-modal { animation: modalOut 200ms ease-in forwards; }
+@keyframes modalIn {
+  from { transform: translateY(60px) scale(0.5, 0.4); opacity: 0; }
+  to { transform: translateY(0) scale(1); opacity: 1; }
+}
+@keyframes modalOut {
+  to { transform: translateY(30px) scale(0.85); opacity: 0; }
 }
 .deck-modal-header {
   display: flex; align-items: center; justify-content: space-between;
   padding: 14px 16px; border-bottom: 1px solid #2a2f38;
 }
-.deck-modal-header h3 { margin: 0; font-size: 15px; }
+.deck-modal-header h3 { margin: 0; font-family: var(--font-display); font-weight: 400; font-size: 18px; }
 .deck-modal-close {
   flex: none; width: 32px; height: 32px; padding: 0; border-radius: 8px; font-size: 14px;
 }
@@ -23,6 +35,11 @@
 .deck-row {
   display: flex; align-items: center; justify-content: space-between; gap: 8px;
   padding: 8px 0; border-bottom: 1px solid #262a30; font-size: 12px;
+  animation: rowIn 450ms var(--spring-bouncy) calc(var(--i) * 40ms + 120ms) backwards;
+}
+@keyframes rowIn {
+  from { transform: translateX(-24px); opacity: 0; }
+  to { transform: translateX(0); opacity: 1; }
 }
 .deck-row:last-child { border-bottom: none; }
 .deck-row-name { font-weight: 600; flex: 1; }

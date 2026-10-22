@@ -1,13 +1,27 @@
-.game-menu { position: relative; flex: none; }
+.game-menu { position: relative; flex: none; display: flex; }
 .menu-btn {
-  width: 44px; padding: 0; font-size: 18px; display: flex; align-items: center; justify-content: center;
+  width: 48px; padding: 0; font-size: 18px; display: flex; align-items: center; justify-content: center;
 }
+.menu-btn.open { rotate: 90deg; transition: rotate 450ms var(--spring-jelly), transform 420ms var(--spring-jelly); }
+.menu-btn:not(.open) { rotate: 0deg; transition: rotate 450ms var(--spring-jelly), transform 420ms var(--spring-jelly), box-shadow 420ms; }
 .menu-backdrop { position: fixed; inset: 0; z-index: 18; }
 .menu-dropdown {
-  position: absolute; right: 0; bottom: calc(100% + 8px); z-index: 19;
-  background: #1e2127; border: 1px solid #2a2f38; border-radius: 10px;
-  padding: 6px; display: flex; flex-direction: column; min-width: 140px;
+  position: absolute; right: 0; bottom: calc(100% + 10px); z-index: 19;
+  background: #1e2127; border: 1px solid #2a2f38; border-radius: 12px;
+  padding: 6px; display: flex; flex-direction: column; min-width: 150px;
   box-shadow: 0 6px 20px rgba(0, 0, 0, 0.4);
+  transform-origin: 85% 100%;
+  animation: menuIn 500ms var(--spring-jelly);
 }
-.menu-dropdown button { text-align: left; background: transparent; padding: 10px 12px; }
+.menu-dropdown.closing { animation: menuOut 160ms ease-in forwards; }
+.menu-dropdown button {
+  text-align: left; background: transparent; padding: 10px 12px; box-shadow: none;
+}
 .menu-dropdown button:active { background: #2a2f38; }
+@keyframes menuIn {
+  from { transform: scale(0.3, 0.1) translateY(20px); opacity: 0; }
+  to { transform: scale(1) translateY(0); opacity: 1; }
+}
+@keyframes menuOut {
+  to { transform: scale(0.6, 0.3); opacity: 0; }
+}

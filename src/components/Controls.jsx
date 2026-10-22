@@ -7,13 +7,13 @@ export default function Controls({
 }) {
   return (
     <div className="controls">
-      {phase === 'battle' && (
-        <button onClick={onDraw} disabled={!canDeploy} style={{ display: canDeploy ? 'block' : 'none' }}>
+      {phase === 'battle' && canDeploy && (
+        <button onClick={onDraw} className="draw pop-in">
           Draw unit
         </button>
       )}
       {phase === 'battle' && (
-        <button onClick={onEndTurn} disabled={hasPendingCard} className="end-turn">
+        <button onClick={onEndTurn} disabled={hasPendingCard} className="end-turn pop-in">
           End turn
         </button>
       )}
