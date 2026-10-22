@@ -239,8 +239,9 @@ export default function Board({
       if (reach.some((x) => x.row === r && x.col === c)) classes.push('moveable')
       if (targets.some((t) => t.row === r && t.col === c)) classes.push('attackable')
       if (blockedTargets.some((t) => t.row === r && t.col === c)) classes.push('blocked')
-      const rock = terrain.some((t) => t.row === r && t.col === c)
-      if (rock) classes.push('terrain')
+      const piece = terrain.find((t) => t.row === r && t.col === c)
+      const rock = !!piece
+      if (rock) classes.push('terrain', piece.kind === 'forest' ? 'forest-ground' : 'rock-ground')
       if (canPlaceCard && placingZoneRows.includes(r) && !u && !rock) classes.push('placeable')
       if (placingZoneRows.includes(r)) classes.push('zone')
 
@@ -260,16 +261,28 @@ export default function Board({
       <div className="board">
         {cells}
         <div className="units-layer">
-          {/* Rocks rise out of the ground first, then the heroes drop in. */}
-          {terrain.map((t, i) => (
-            <div
-              key={`rock-${t.row}-${t.col}`}
-              className={`rock rock-v${(t.row * 7 + t.col * 3) % 3}`}
-              style={{ '--row': t.row, '--col': t.col, '--i': i }}
-            >
-              <span className="rock-body" />
-            </div>
-          ))}
+          {/* Rocks and forests rise out of the ground first, then the heroes drop in. */}
+          {terrain.map((t, i) =>
+            t.kind === 'forest' ? (
+              <div
+                key={`forest-${t.row}-${t.col}`}
+                className={`forest forest-v${(t.row * 7 + t.col * 3) % 3}`}
+                style={{ '--row': t.row, '--col': t.col, '--i': i }}
+              >
+                <span className="tree tree-a" style={{ '--t': 0 }} />
+                <span className="tree tree-b" style={{ '--t': 1 }} />
+                <span className="tree tree-c" style={{ '--t': 2 }} />
+              </div>
+            ) : (
+              <div
+                key={`rock-${t.row}-${t.col}`}
+                className={`rock rock-v${(t.row * 7 + t.col * 3) % 3}`}
+                style={{ '--row': t.row, '--col': t.col, '--i': i }}
+              >
+                <span className="rock-body" />
+              </div>
+            ),
+          )}
           {units.map((u, i) => (
             <UnitChip
               key={u.id}

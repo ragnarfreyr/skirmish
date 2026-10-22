@@ -340,7 +340,7 @@ export function useGameState() {
           return
         }
         if (isTerrain(terrain, row, col)) {
-          setState({ ...state, message: 'Terrain is impassable — units have to go around it.' })
+          setState({ ...state, message: 'Rocks and forests are impassable — units have to go around them.' })
           return
         }
         setState({ ...state, message: `${selected.name} can't move that far (${selected.move} ${selected.move === 1 ? 'square' : 'squares'} left).` })

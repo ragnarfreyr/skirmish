@@ -29,7 +29,8 @@ export function generateTerrain(random = Math.random) {
       ;[pool[i], pool[j]] = [pool[j], pool[i]]
     }
     const terrain = pool.slice(0, count)
-    if (sidesConnected(terrain)) return terrain
+    // Each piece is randomly a rock or a forest. Both block movement and sight alike.
+    if (sidesConnected(terrain)) return terrain.map((t) => ({ ...t, kind: random() < 0.5 ? 'forest' : 'rock' }))
   }
   return []
 }
