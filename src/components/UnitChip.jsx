@@ -87,7 +87,8 @@ export default function UnitChip({ unit, selected, activated, locked, introDelay
           <div className="stats">
             <span className="atk">
               <span className="icon">⚔</span>
-              {unit.atk}
+              {unit.attacks}
+              <span className="to-hit">{unit.hit}+</span>
             </span>
             <span className="hp" key={`hp-${unit.hp}`}>
               <span className="icon">❤</span>

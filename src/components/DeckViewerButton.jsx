@@ -42,7 +42,7 @@ export default function DeckViewerButton({ deck, label }) {
                     {card.ranged ? ' (RNG)' : ''}
                   </span>
                   <span className="deck-row-stats">
-                    {card.mana} mana • {card.atk} atk / {card.hp} hp
+                    {card.mana} mana • {card.attacks} dice, hit {card.hit}+ / {card.hp} hp
                   </span>
                   <span className="deck-row-count">×{card.count}</span>
                 </div>

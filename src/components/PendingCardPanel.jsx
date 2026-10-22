@@ -14,7 +14,10 @@ export default function PendingCardPanel({ pendingCard }) {
         </div>
         <div className="dstats">
           <span className="d-mana">⚡{pendingCard.mana}</span>
-          <span>⚔{pendingCard.atk}</span>
+          <span>
+            ⚔{pendingCard.attacks}
+            <span className="to-hit">{pendingCard.hit}+</span>
+          </span>
           <span>❤{pendingCard.hp}</span>
         </div>
       </div>

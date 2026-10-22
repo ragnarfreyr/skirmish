@@ -3,6 +3,7 @@ import { ROWS, HOME_ROWS, MAX_UNITS, DRAW_ROUNDS } from '../game/constants.js'
 import { makeUnit, unitAt, bfsReachable, attackableTargets, refillMana, shotBlockedByTerrain } from '../game/rules.js'
 import { isTerrain } from '../game/terrain.js'
 import { createInitialState } from '../game/initialState.js'
+import { countHits } from '../game/dice.js'
 
 // How long a destroyed unit stays on the board so its death animation can finish.
 // Keep in sync with the .unit.dying animation (delay + duration) in UnitChip.css.
@@ -17,6 +18,7 @@ export function useGameState() {
     openingHand, selectedHandIndex,
     deployedCount, hasDeployedThisTurn, deployCounter, currentPlayer, round,
     selectedId, gameOver, winText, message, gameId, lastEvent, activatedId, activatedName,
+    roll, resolving,
   } = state
 
   // I-go-you-go: a player activates one unit per turn. Until they move or attack,
@@ -60,7 +62,7 @@ export function useGameState() {
   // Nothing useful left to do: the activated unit is out of mana (or dead) and no deploy is pending.
   const activatedUnit = units.find((u) => u.id === activatedId)
   const turnDone =
-    phase === 'battle' && !gameOver && !!activatedId && !pendingCard && !canDeploy &&
+    phase === 'battle' && !gameOver && !resolving && !!activatedId && !pendingCard && !canDeploy &&
     (!activatedUnit || activatedUnit.mana === 0)
 
   // ---- actions ----
@@ -79,7 +81,7 @@ export function useGameState() {
   }
 
   function endTurn() {
-    if (pendingCard) return
+    if (pendingCard || resolving) return
     const nextPlayer = currentPlayer === 1 ? 2 : 1
     const nextRound = nextPlayer === 1 ? round + 1 : round
     let msg = `Player ${nextPlayer}'s turn. Activate one unit.`
@@ -99,7 +101,7 @@ export function useGameState() {
   }
 
   function drawForBattle() {
-    if (!canDeploy) return
+    if (!canDeploy || resolving) return
     const deck = decks[currentPlayer].slice()
     const card = deck.shift()
     if (!card) {
@@ -117,10 +119,7 @@ export function useGameState() {
   function deployDuringSetup(row, col) {
     const card = openingHand[selectedHandIndex]
     const newCounter = deployCounter + 1
-    const newUnit = makeUnit(
-      `p${deployingPlayer}-${card.key}-${newCounter}`,
-      deployingPlayer, card.name, card.mana, card.atk, card.hp, row, col, false, card.ranged,
-    )
+    const newUnit = makeUnit(`p${deployingPlayer}-${card.key}-${newCounter}`, deployingPlayer, card, row, col)
     let newUnits = [...units, newUnit]
     const remainingHand = openingHand.filter((_, i) => i !== selectedHandIndex)
     let newDeployPlaced = deployPlaced + 1
@@ -178,10 +177,7 @@ export function useGameState() {
     const card = pendingCard
     const newCounter = deployCounter + 1
     const newUnit = {
-      ...makeUnit(
-        `p${currentPlayer}-${card.key}-${newCounter}`,
-        currentPlayer, card.name, card.mana, card.atk, card.hp, row, col, false, card.ranged,
-      ),
+      ...makeUnit(`p${currentPlayer}-${card.key}-${newCounter}`, currentPlayer, card, row, col),
       mana: 0,
       sick: true,
     }
@@ -226,78 +222,33 @@ export function useGameState() {
     })
   }
 
+  // Attacking is a dice roll, like a tabletop wargame: the attacker rolls one d6 per
+  // attack, and each die that shows its hit value or higher deals 1 damage.
+  // The roll is put on screen first (see DiceTray); resolveRoll applies the result.
   function performAttack(attacker, defender) {
-    const newAttackerMana = attacker.mana - 1
-    const newDefenderHp = defender.hp - attacker.atk
-    const retaliates = !attacker.ranged && newDefenderHp > 0
-    const newAttackerHp = retaliates ? attacker.hp - defender.atk : attacker.hp
-
-    const attackerDying = newAttackerHp <= 0
-    const defenderDying = newDefenderHp <= 0
-
-    const newUnits = units.map((u) => {
-      if (u.id === attacker.id) {
-        return { ...u, mana: newAttackerMana, hp: newAttackerHp, _justAttacked: true, dying: attackerDying }
-      }
-      if (u.id === defender.id) {
-        return { ...u, hp: newDefenderHp, _justHit: true, dying: defenderDying }
-      }
-      return u
-    })
-
     setState({
       ...state,
-      units: newUnits,
-      message: `${attacker.name}${attacker.ranged ? ' shoots ' : ' attacks '}${defender.name}.`,
+      units: units.map((u) => (u.id === attacker.id ? { ...u, mana: u.mana - 1 } : u)),
       activatedId: attacker.id,
       activatedName: attacker.name,
-      // Everything the board needs to choreograph the clash (lunge, projectile, numbers, shake).
-      lastEvent: {
-        id: Math.random(),
-        type: 'attack',
-        attackerId: attacker.id,
-        defenderId: defender.id,
-        from: { row: attacker.row, col: attacker.col },
-        to: { row: defender.row, col: defender.col },
-        ranged: attacker.ranged,
-        dmg: attacker.atk,
-        retaliation: retaliates ? defender.atk : 0,
-        attackerDies: attackerDying,
-        defenderDies: defenderDying,
-      },
+      resolving: true,
+      roll: makeRoll('attack', attacker, defender),
+      message: `${attacker.name}${attacker.ranged ? ' shoots ' : ' attacks '}${defender.name}: rolling ${
+        attacker.attacks
+      } ${attacker.attacks === 1 ? 'die' : 'dice'} — every ${attacker.hit}+ is a hit.`,
     })
+  }
 
+  // Called by the dice tray once the dice have settled and the result has been shown.
+  function resolveRoll(values) {
+    setState((prev) => applyRoll(prev, values))
     // Let the lunge, hit and death animations play out (see DEATH_CLEANUP_MS), then
-    // remove destroyed units and check for a winner.
-    setTimeout(() => {
-      setState((prev) => {
-        const survivors = prev.units.filter((u) => !u.dying)
-        const cleaned = survivors.map((u) => ({ ...u, _justAttacked: false, _justHit: false }))
-        const p1Hero = cleaned.find((u) => u.id === 'p1-hero')
-        const p2Hero = cleaned.find((u) => u.id === 'p2-hero')
-        let gameOverNext = prev.gameOver
-        let winTextNext = prev.winText
-        if (!p1Hero) {
-          gameOverNext = true
-          winTextNext = 'Player 2 wins! The Warlord was defeated.'
-        } else if (!p2Hero) {
-          gameOverNext = true
-          winTextNext = 'Player 1 wins! The Archmage was defeated.'
-        }
-        const stillSelected = cleaned.some((u) => u.id === prev.selectedId)
-        return {
-          ...prev,
-          units: cleaned,
-          selectedId: stillSelected ? prev.selectedId : null,
-          gameOver: gameOverNext,
-          winText: winTextNext,
-        }
-      })
-    }, DEATH_CLEANUP_MS)
+    // remove destroyed units, check for a winner and start any strike-back roll.
+    setTimeout(() => setState(afterBlow), DEATH_CLEANUP_MS)
   }
 
   function handleCellTap(row, col) {
-    if (gameOver) return
+    if (gameOver || resolving) return
 
     if (phase === 'deploy') {
       if (selectedHandIndex === null) return
@@ -383,6 +334,99 @@ export function useGameState() {
     currentPlayer, selectedId, gameOver, winText, message,
     reach, targets, blockedTargets, placingZoneRows, canPlaceCard, manaP1, manaP2, canDeploy,
     winOverlayDismissed, gameId, lastEvent, round, drawsLeft, activatedId, activatedName, lockedIds, turnDone,
-    handleCellTap, drawForBattle, endTurn, resetGame, dismissWinOverlay, selectHandCard,
+    roll, resolving,
+    handleCellTap, drawForBattle, endTurn, resetGame, dismissWinOverlay, selectHandCard, resolveRoll,
+  }
+}
+
+// ---- dice combat helpers (pure: they take a state and return the next one) ----
+
+function makeRoll(kind, attacker, defender) {
+  return {
+    id: Math.random(),
+    kind, // 'attack' | 'strikeback'
+    attackerId: attacker.id,
+    attackerName: attacker.name,
+    defenderId: defender.id,
+    defenderName: defender.name,
+    owner: attacker.owner,
+    ranged: kind === 'attack' && attacker.ranged,
+    dice: attacker.attacks,
+    hit: attacker.hit,
+  }
+}
+
+function applyRoll(prev, values) {
+  const roll = prev.roll
+  if (!roll) return prev
+  const attacker = prev.units.find((u) => u.id === roll.attackerId)
+  const defender = prev.units.find((u) => u.id === roll.defenderId)
+  if (!attacker || !defender) return { ...prev, roll: null, resolving: false }
+
+  const hits = countHits(values, roll.hit)
+  const newHp = defender.hp - hits
+  const dies = newHp <= 0
+  const units = prev.units.map((u) => {
+    if (u.id === attacker.id) return { ...u, _justAttacked: true }
+    if (u.id === defender.id) return { ...u, hp: newHp, _justHit: hits > 0, dying: dies }
+    return u
+  })
+
+  // Melee attacks get struck back if the defender lives through it. Ranged ones never do.
+  const strikesBack = roll.kind === 'attack' && !roll.ranged && !dies && defender.attacks > 0
+  let message
+  if (hits === 0) message = `${roll.attackerName} missed everything!`
+  else if (dies) message = `${hits} ${hits === 1 ? 'hit' : 'hits'} — ${roll.defenderName} is destroyed!`
+  else message = `${hits} ${hits === 1 ? 'hit' : 'hits'} — ${roll.defenderName} takes ${hits} damage.`
+  if (strikesBack) message += ` ${roll.defenderName} strikes back…`
+
+  return {
+    ...prev,
+    units,
+    roll: null,
+    queuedRoll: strikesBack ? makeRoll('strikeback', defender, attacker) : null,
+    message,
+    // Everything the board needs to choreograph the clash (lunge, projectile, numbers, shake).
+    lastEvent: {
+      id: Math.random(),
+      type: 'attack',
+      attackerId: attacker.id,
+      defenderId: defender.id,
+      from: { row: attacker.row, col: attacker.col },
+      to: { row: defender.row, col: defender.col },
+      ranged: roll.ranged,
+      dmg: hits,
+      retaliation: 0,
+      attackerDies: false,
+      defenderDies: dies,
+    },
+  }
+}
+
+function afterBlow(prev) {
+  const survivors = prev.units.filter((u) => !u.dying)
+  const cleaned = survivors.map((u) => ({ ...u, _justAttacked: false, _justHit: false }))
+  let gameOver = prev.gameOver
+  let winText = prev.winText
+  if (!cleaned.some((u) => u.id === 'p1-hero')) {
+    gameOver = true
+    winText = 'Player 2 wins! The Warlord was defeated.'
+  } else if (!cleaned.some((u) => u.id === 'p2-hero')) {
+    gameOver = true
+    winText = 'Player 1 wins! The Archmage was defeated.'
+  }
+  const next = prev.queuedRoll && !gameOver ? prev.queuedRoll : null
+  return {
+    ...prev,
+    units: cleaned,
+    selectedId: cleaned.some((u) => u.id === prev.selectedId) ? prev.selectedId : null,
+    gameOver,
+    winText,
+    roll: next,
+    queuedRoll: null,
+    resolving: !!next,
+    message: next
+      ? `${next.attackerName} strikes back: rolling ${next.dice} ${next.dice === 1 ? 'die' : 'dice'} — every ${next.hit}+ is a hit.`
+      : prev.message,
   }
 }

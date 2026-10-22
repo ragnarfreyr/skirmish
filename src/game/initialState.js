@@ -1,11 +1,11 @@
-import { buildDeck } from './cards.js'
+import { buildDeck, HERO_DEFS } from './cards.js'
 import { makeUnit } from './rules.js'
 import { generateTerrain } from './terrain.js'
 
 export function createInitialState() {
   const units = [
-    makeUnit('p1-hero', 1, 'Warlord', 2, 3, 9, 5, 0, true),
-    makeUnit('p2-hero', 2, 'Archmage', 2, 3, 9, 0, 0, true),
+    makeUnit('p1-hero', 1, HERO_DEFS[1], 5, 0, true),
+    makeUnit('p2-hero', 2, HERO_DEFS[2], 0, 0, true),
   ]
 
   const decks = { 1: buildDeck(), 2: buildDeck() }
@@ -16,6 +16,9 @@ export function createInitialState() {
   return {
     gameId: Date.now(), // changes on restart so the board can replay its intro
     lastEvent: null, // most recent attack / breakthrough, read by the board to play effects
+    roll: null, // dice roll on screen right now: { id, kind, attackerId, defenderId, dice, hit, owner }
+    queuedRoll: null, // a strike-back roll waiting for the first blow's animation to finish
+    resolving: false, // true from the first roll until the last blow has landed
     units,
     terrain: generateTerrain(), // impassable rock tiles, rolled fresh each game
     life: { 1: 20, 2: 20 },

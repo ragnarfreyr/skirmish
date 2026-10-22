@@ -24,7 +24,10 @@ export default function OpeningHand({ hand, selectedIndex, onSelect, player }) {
               </div>
               <div className="hcstats">
                 <span className="hc-mana">⚡{card.mana}</span>
-                <span>⚔{card.atk}</span>
+                <span>
+                  ⚔{card.attacks}
+                  <span className="to-hit">{card.hit}+</span>
+                </span>
                 <span>❤{card.hp}</span>
               </div>
             </button>

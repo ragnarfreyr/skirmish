@@ -7,6 +7,7 @@ import PendingCardPanel from './components/PendingCardPanel.jsx'
 import Controls from './components/Controls.jsx'
 import WinScreen from './components/WinScreen.jsx'
 import TurnBanner from './components/TurnBanner.jsx'
+import DiceTray from './components/DiceTray.jsx'
 import './App.css'
 
 export default function App() {
@@ -16,7 +17,8 @@ export default function App() {
     currentPlayer, selectedId, gameOver, winText, message,
     units, terrain, reach, targets, blockedTargets, placingZoneRows, canPlaceCard, manaP1, manaP2, canDeploy,
     winOverlayDismissed, gameId, lastEvent, round, drawsLeft, activatedId, activatedName, lockedIds, turnDone,
-    handleCellTap, drawForBattle, endTurn, resetGame, dismissWinOverlay, selectHandCard,
+    roll, resolving,
+    handleCellTap, drawForBattle, endTurn, resetGame, dismissWinOverlay, selectHandCard, resolveRoll,
   } = useGameState()
 
   const activeDeckPlayer = phase === 'deploy' ? deployingPlayer : currentPlayer
@@ -72,6 +74,7 @@ export default function App() {
         phase={phase}
         canDeploy={canDeploy}
         hasPendingCard={!!pendingCard}
+        busy={resolving}
         turnDone={turnDone}
         drawsLeft={drawsLeft}
         onDraw={drawForBattle}
@@ -80,6 +83,8 @@ export default function App() {
         deck={decks[activeDeckPlayer]}
         deckOwnerLabel={activeDeckLabel}
       />
+
+      <DiceTray roll={roll} onResolve={resolveRoll} />
 
       <TurnBanner key={`banner-${gameId}`} phase={phase} player={activeDeckPlayer} round={round} gameOver={gameOver} />
 

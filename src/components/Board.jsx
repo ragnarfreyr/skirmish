@@ -88,6 +88,11 @@ export default function Board({
     }
 
     setTimeout(() => {
+      if (ev.dmg === 0) {
+        // Every die missed: the blow glances off.
+        spawnText(ev.to, 'MISS', '')
+        return
+      }
       hit(defender, ux, uy, ev.dmg, ev.defenderDies)
       spawnText(ev.to, `-${ev.dmg}`, ev.defenderDies ? 'big' : '')
       if (ev.defenderDies) burst(ev.to, size)

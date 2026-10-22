@@ -1,0 +1,146 @@
+/* Full-screen dice overlay. Always mounted (the 3D canvas needs a real size to
+   start up), just invisible and click-through until a roll is on. */
+.dice-tray {
+  position: fixed;
+  inset: 0;
+  z-index: 14;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: space-between;
+  padding: calc(18px + env(safe-area-inset-top)) 16px calc(22px + env(safe-area-inset-bottom));
+  background: radial-gradient(90% 60% at 50% 50%, rgba(20, 22, 26, 0.55) 0%, rgba(8, 9, 12, 0.88) 100%);
+  opacity: 0;
+  visibility: hidden;
+  pointer-events: none;
+  transition: opacity 220ms ease-out, visibility 0s linear 220ms;
+}
+.dice-tray.show {
+  opacity: 1;
+  visibility: visible;
+  pointer-events: auto;
+  transition: opacity 180ms ease-out;
+  cursor: pointer;
+}
+
+.dice-stage {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+}
+.dice-stage canvas {
+  width: 100%;
+  height: 100%;
+  display: block;
+}
+
+/* ---- Top: what's being rolled ---- */
+.dice-hud {
+  position: relative;
+  z-index: 1;
+  text-align: center;
+  animation: hudSlam 650ms var(--spring-jelly);
+}
+@keyframes hudSlam {
+  from { transform: translateY(-40px) scale(0.6); opacity: 0; }
+  to { transform: translateY(0) scale(1); opacity: 1; }
+}
+.dice-title {
+  font-size: 15px;
+  font-weight: 600;
+  color: #d9dde5;
+  margin-bottom: 8px;
+}
+.dice-title .who { font-family: var(--font-display); font-weight: 400; font-size: 18px; }
+.dice-tray.p1 .dice-title .who:first-child,
+.dice-tray.p2 .dice-title .who:last-child { color: #a9d1ff; }
+.dice-tray.p2 .dice-title .who:first-child,
+.dice-tray.p1 .dice-title .who:last-child { color: #ffb3bc; }
+
+.dice-rule {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 14px;
+  border-radius: 14px;
+  background: #23272f;
+  box-shadow: 0 4px 0 #111318, 0 10px 20px rgba(0, 0, 0, 0.4);
+  font-size: 15px;
+  color: #cfd3db;
+}
+.dice-count, .dice-target { font-family: var(--font-display); font-size: 22px; color: #fff; }
+.dice-target {
+  color: #14161a;
+  background: var(--gold);
+  border-radius: 8px;
+  padding: 0 8px;
+  box-shadow: 0 3px 0 var(--gold-deep);
+  animation: bump 700ms var(--spring-jelly) 250ms backwards;
+}
+.dice-sep { opacity: 0.4; }
+.dice-odds { font-size: 11px; opacity: 0.6; }
+
+/* ---- Bottom: the verdict ---- */
+.dice-result {
+  position: relative;
+  z-index: 1;
+  text-align: center;
+}
+.dice-faces {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 8px;
+  margin-bottom: 12px;
+}
+.die-face {
+  width: 40px;
+  height: 40px;
+  border-radius: 9px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: var(--font-display);
+  font-size: 22px;
+  animation: faceIn 600ms var(--spring-jelly) calc(var(--i) * 70ms) backwards;
+}
+.die-face.hit {
+  background: var(--gold);
+  color: #14161a;
+  box-shadow: 0 4px 0 var(--gold-deep), 0 0 18px rgba(255, 210, 74, 0.55);
+}
+.die-face.miss {
+  background: #2a2e36;
+  color: #6c727d;
+  box-shadow: 0 4px 0 #15171b;
+  text-decoration: line-through;
+}
+@keyframes faceIn {
+  from { transform: translateY(30px) scale(0.3) rotate(-30deg); opacity: 0; }
+  to { transform: none; opacity: 1; }
+}
+
+.dice-verdict {
+  font-family: var(--font-display);
+  font-size: 46px;
+  line-height: 1;
+  color: var(--gold);
+  text-shadow: 0 4px 0 #7a5200, 0 0 26px rgba(255, 210, 74, 0.5);
+  animation: verdictSlam 750ms var(--spring-jelly) 200ms backwards;
+}
+.dice-verdict.miss { color: #9aa1ad; text-shadow: 0 4px 0 #3a3f48; }
+@keyframes verdictSlam {
+  from { transform: scale(3) rotate(-10deg); opacity: 0; }
+  to { transform: scale(1) rotate(-3deg); opacity: 1; }
+}
+.dice-sub { margin-top: 10px; font-size: 13px; color: #cfd3db; animation: fadeIn 300ms ease-out 400ms backwards; }
+.dice-tap { opacity: 0.5; }
+
+/* Unit stat on chips and cards: "4 dice, hits on 3+". */
+.to-hit {
+  margin-left: 2px;
+  padding: 0 2px;
+  border-radius: 3px;
+  background: rgba(255, 210, 74, 0.18);
+  color: var(--gold);
+}

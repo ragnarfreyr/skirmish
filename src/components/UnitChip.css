@@ -153,3 +153,7 @@
 }
 /* The ranged tag moves aside when the ACTIVE tag needs the bottom edge. */
 .unit:has(.active-tag) .ranged-tag { bottom: auto; top: -4px; left: -4px; }
+
+/* Room for "⚔4 3+ ❤9" on one line, even on small phones. */
+.unit .stats { gap: 3px; white-space: nowrap; }
+.unit .stats .to-hit { margin-left: 1px; padding: 0 1px; }

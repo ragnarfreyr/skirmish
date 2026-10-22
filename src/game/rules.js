@@ -1,20 +1,22 @@
 import { ROWS, COLS } from './constants.js'
 import { isTerrain, hasLineOfSight } from './terrain.js'
 
-export function makeUnit(id, owner, name, mana, atk, hp, row, col, isHero, ranged) {
+// `card` is a unit definition: { name, mana, attacks, hit, hp, ranged }.
+export function makeUnit(id, owner, card, row, col, isHero = false) {
   return {
     id,
     owner,
-    name,
-    mana,
-    maxMana: mana,
-    atk,
-    hp,
-    maxHp: hp,
+    name: card.name,
+    mana: card.mana,
+    maxMana: card.mana,
+    attacks: card.attacks, // dice rolled when this unit attacks
+    hit: card.hit, // each die showing this or higher is a hit
+    hp: card.hp,
+    maxHp: card.hp,
     row,
     col,
     isHero: !!isHero,
-    ranged: !!ranged,
+    ranged: !!card.ranged,
     breached: false,
     dying: false,
     sick: false,
