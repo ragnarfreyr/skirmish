@@ -14,7 +14,7 @@ export default function App() {
     life, phase, deployingPlayer, deployPlaced, decks, pendingCard,
     openingHand, selectedHandIndex,
     currentPlayer, selectedId, gameOver, winText, message,
-    units, reach, targets, placingZoneRows, canPlaceCard, manaP1, manaP2, canDeploy,
+    units, terrain, reach, targets, blockedTargets, placingZoneRows, canPlaceCard, manaP1, manaP2, canDeploy,
     winOverlayDismissed, gameId, lastEvent,
     handleCellTap, drawForBattle, endTurn, resetGame, dismissWinOverlay, selectHandCard,
   } = useGameState()
@@ -37,8 +37,10 @@ export default function App() {
         key={gameId}
         lastEvent={lastEvent}
         units={units}
+        terrain={terrain}
         reach={reach}
         targets={targets}
+        blockedTargets={blockedTargets}
         canPlaceCard={canPlaceCard}
         placingZoneRows={placingZoneRows}
         selectedId={selectedId}

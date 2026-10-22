@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { ROWS, HOME_ROWS, MAX_UNITS } from '../game/constants.js'
-import { makeUnit, unitAt, bfsReachable, attackableTargets, refillMana } from '../game/rules.js'
+import { makeUnit, unitAt, bfsReachable, attackableTargets, refillMana, shotBlockedByTerrain } from '../game/rules.js'
+import { isTerrain } from '../game/terrain.js'
 import { createInitialState } from '../game/initialState.js'
 
 // How long a destroyed unit stays on the board so its death animation can finish.
@@ -12,7 +13,7 @@ export function useGameState() {
   // Starts false so the celebration overlay shows the instant a game is won; "View board" flips it.
   const [winOverlayDismissed, setWinOverlayDismissed] = useState(false)
   const {
-    units, life, phase, deployingPlayer, deployPlaced, decks, pendingCard,
+    units, terrain, life, phase, deployingPlayer, deployPlaced, decks, pendingCard,
     openingHand, selectedHandIndex,
     deployedCount, hasDeployedThisTurn, deployCounter, currentPlayer,
     selectedId, gameOver, winText, message, gameId, lastEvent,
@@ -22,9 +23,15 @@ export function useGameState() {
   const selectedUnit = phase === 'battle' ? units.find((u) => u.id === selectedId) : null
   let reach = []
   let targets = []
+  let blockedTargets = [] // in range, but terrain is in the way
   if (selectedUnit && selectedUnit.owner === currentPlayer && !pendingCard) {
-    reach = bfsReachable(units, selectedUnit)
-    targets = attackableTargets(units, selectedUnit)
+    reach = bfsReachable(units, selectedUnit, terrain)
+    targets = attackableTargets(units, selectedUnit, terrain)
+    if (selectedUnit.mana >= 1) {
+      blockedTargets = units.filter(
+        (t) => t.owner !== selectedUnit.owner && shotBlockedByTerrain(selectedUnit, t, terrain),
+      )
+    }
   }
   const placingZoneRows =
     phase === 'deploy' ? HOME_ROWS[deployingPlayer] : pendingCard ? HOME_ROWS[currentPlayer] : []
@@ -135,7 +142,8 @@ export function useGameState() {
   }
 
   function deployDuringBattle(row, col) {
-    const validSpot = HOME_ROWS[currentPlayer].includes(row) && !unitAt(units, row, col)
+    const validSpot =
+      HOME_ROWS[currentPlayer].includes(row) && !unitAt(units, row, col) && !isTerrain(terrain, row, col)
     if (!validSpot) {
       setState({ ...state, message: `Place ${pendingCard.name} on an empty tile in your zone first.` })
       return
@@ -255,7 +263,7 @@ export function useGameState() {
 
     if (phase === 'deploy') {
       if (selectedHandIndex === null) return
-      if (!HOME_ROWS[deployingPlayer].includes(row) || unitAt(units, row, col)) return
+      if (!HOME_ROWS[deployingPlayer].includes(row) || unitAt(units, row, col) || isTerrain(terrain, row, col)) return
       deployDuringSetup(row, col)
       return
     }
@@ -275,25 +283,29 @@ export function useGameState() {
           return
         }
         if (clicked.owner !== currentPlayer) {
-          const currentTargets = attackableTargets(units, selected)
+          const currentTargets = attackableTargets(units, selected, terrain)
           if (currentTargets.some((t) => t.id === clicked.id)) {
             performAttack(selected, clicked)
             return
           }
-          const msg =
-            selected.mana < 1
-              ? `${selected.name} needs 1 mana to attack — none left this turn.`
-              : `${selected.name} is out of range to attack ${clicked.name}.`
+          let msg = `${selected.name} is out of range to attack ${clicked.name}.`
+          if (selected.mana < 1) msg = `${selected.name} needs 1 mana to attack — none left this turn.`
+          else if (shotBlockedByTerrain(selected, clicked, terrain))
+            msg = `Terrain blocks ${selected.name}'s line of sight to ${clicked.name}.`
           setState({ ...state, message: msg })
           return
         }
         setState({ ...state, selectedId: clicked.id })
         return
       } else {
-        const currentReach = bfsReachable(units, selected)
+        const currentReach = bfsReachable(units, selected, terrain)
         const spot = currentReach.find((r) => r.row === row && r.col === col)
         if (spot) {
           performMove(selected, row, col, spot.cost)
+          return
+        }
+        if (isTerrain(terrain, row, col)) {
+          setState({ ...state, message: 'Terrain is impassable — units have to go around it.' })
           return
         }
         setState({ ...state, message: `Not enough mana for ${selected.name} to reach that tile.` })
@@ -309,10 +321,10 @@ export function useGameState() {
   }
 
   return {
-    units, life, phase, deployingPlayer, deployPlaced, decks, pendingCard,
+    units, terrain, life, phase, deployingPlayer, deployPlaced, decks, pendingCard,
     openingHand, selectedHandIndex,
     currentPlayer, selectedId, gameOver, winText, message,
-    reach, targets, placingZoneRows, canPlaceCard, manaP1, manaP2, canDeploy,
+    reach, targets, blockedTargets, placingZoneRows, canPlaceCard, manaP1, manaP2, canDeploy,
     winOverlayDismissed, gameId, lastEvent,
     handleCellTap, drawForBattle, endTurn, resetGame, dismissWinOverlay, selectHandCard,
   }

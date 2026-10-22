@@ -1,5 +1,6 @@
 import { buildDeck } from './cards.js'
 import { makeUnit } from './rules.js'
+import { generateTerrain } from './terrain.js'
 
 export function createInitialState() {
   const units = [
@@ -16,6 +17,7 @@ export function createInitialState() {
     gameId: Date.now(), // changes on restart so the board can replay its intro
     lastEvent: null, // most recent attack / breakthrough, read by the board to play effects
     units,
+    terrain: generateTerrain(), // impassable rock tiles, rolled fresh each game
     life: { 1: 20, 2: 20 },
     phase: 'deploy', // 'deploy' | 'battle'
     deployingPlayer: 1,

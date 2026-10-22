@@ -12,7 +12,7 @@ const RETALIATION_DELAY_MS = 110
 const GRID_GAP = 3 // keep in sync with --gap in Board.css
 
 export default function Board({
-  units, reach, targets, canPlaceCard, placingZoneRows, selectedId, onCellTap, lastEvent,
+  units, terrain, reach, targets, blockedTargets, canPlaceCard, placingZoneRows, selectedId, onCellTap, lastEvent,
 }) {
   const shakeRef = useRef(null)
   const fxRef = useRef(null)
@@ -231,7 +231,10 @@ export default function Board({
       const dist = selected ? Math.abs(selected.row - r) + Math.abs(selected.col - c) : c + r
       if (reach.some((x) => x.row === r && x.col === c)) classes.push('moveable')
       if (targets.some((t) => t.row === r && t.col === c)) classes.push('attackable')
-      if (canPlaceCard && placingZoneRows.includes(r) && !u) classes.push('placeable')
+      if (blockedTargets.some((t) => t.row === r && t.col === c)) classes.push('blocked')
+      const rock = terrain.some((t) => t.row === r && t.col === c)
+      if (rock) classes.push('terrain')
+      if (canPlaceCard && placingZoneRows.includes(r) && !u && !rock) classes.push('placeable')
       if (placingZoneRows.includes(r)) classes.push('zone')
 
       cells.push(
@@ -250,12 +253,22 @@ export default function Board({
       <div className="board">
         {cells}
         <div className="units-layer">
+          {/* Rocks rise out of the ground first, then the heroes drop in. */}
+          {terrain.map((t, i) => (
+            <div
+              key={`rock-${t.row}-${t.col}`}
+              className={`rock rock-v${(t.row * 7 + t.col * 3) % 3}`}
+              style={{ '--row': t.row, '--col': t.col, '--i': i }}
+            >
+              <span className="rock-body" />
+            </div>
+          ))}
           {units.map((u, i) => (
             <UnitChip
               key={u.id}
               unit={u}
               selected={u.id === selectedId}
-              introDelay={introDone.current ? 0 : 250 + i * 140}
+              introDelay={introDone.current ? 0 : 300 + terrain.length * 90 + i * 140}
               registerRef={registerRef}
             />
           ))}
