@@ -1,7 +1,7 @@
 import { ROWS, COLS, HOME_ROWS } from './constants.js'
 
 export const MAX_TERRAIN = 6
-export const MIN_TERRAIN = 1
+export const MIN_TERRAIN = 3
 
 // Terrain only goes in no-man's-land (the rows outside both deploy zones), so it
 // never eats deploy space, never sits on a hero, and never blocks a breakthrough row.

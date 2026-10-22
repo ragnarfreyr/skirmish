@@ -1,9 +1,10 @@
 import { useEffect, useRef, useState } from 'react'
+import { DRAW_ROUNDS } from '../game/constants.js'
 import './TurnBanner.css'
 
 // Big slam-in banner whenever the turn or phase changes. Purely decorative:
 // it never blocks taps and gets out of the way after about a second.
-export default function TurnBanner({ phase, player, gameOver }) {
+export default function TurnBanner({ phase, player, round, gameOver }) {
   const [banner, setBanner] = useState(null)
   const bannerKey = `${phase}-${player}`
   const prevPhase = useRef(phase)
@@ -13,7 +14,10 @@ export default function TurnBanner({ phase, player, gameOver }) {
     const battleStarts = phase === 'battle' && prevPhase.current === 'deploy'
     prevPhase.current = phase
     let title = `Player ${player}`
-    let sub = 'Your turn'
+    let sub = `Round ${round} · your turn`
+    if (round === DRAW_ROUNDS) sub = `Round ${round} · last chance to draw`
+    if (round > DRAW_ROUNDS) sub = `Round ${round} · no more draws`
+    if (round === DRAW_ROUNDS + 1 && player === 1) title = 'Final stand!'
     if (phase === 'deploy') {
       title = 'Deploy!'
       sub = `Player ${player} — place 3 units`

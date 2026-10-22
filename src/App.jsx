@@ -15,7 +15,7 @@ export default function App() {
     openingHand, selectedHandIndex,
     currentPlayer, selectedId, gameOver, winText, message,
     units, terrain, reach, targets, blockedTargets, placingZoneRows, canPlaceCard, manaP1, manaP2, canDeploy,
-    winOverlayDismissed, gameId, lastEvent, activatedId, activatedName, lockedIds, turnDone,
+    winOverlayDismissed, gameId, lastEvent, round, drawsLeft, activatedId, activatedName, lockedIds, turnDone,
     handleCellTap, drawForBattle, endTurn, resetGame, dismissWinOverlay, selectHandCard,
   } = useGameState()
 
@@ -59,6 +59,7 @@ export default function App() {
         deployingPlayer={deployingPlayer}
         deployPlaced={deployPlaced}
         currentPlayer={currentPlayer}
+        round={round}
         activatedName={activatedId ? activatedName : ''}
         message={message}
       />
@@ -74,6 +75,7 @@ export default function App() {
         canDeploy={canDeploy}
         hasPendingCard={!!pendingCard}
         turnDone={turnDone}
+        drawsLeft={drawsLeft}
         onDraw={drawForBattle}
         onEndTurn={endTurn}
         onReset={resetGame}
@@ -81,7 +83,7 @@ export default function App() {
         deckOwnerLabel={activeDeckLabel}
       />
 
-      <TurnBanner key={`banner-${gameId}`} phase={phase} player={activeDeckPlayer} gameOver={gameOver} />
+      <TurnBanner key={`banner-${gameId}`} phase={phase} player={activeDeckPlayer} round={round} gameOver={gameOver} />
 
       <WinScreen
         gameOver={gameOver}

@@ -1,4 +1,15 @@
 .turn-label { text-align: center; font-size: 12px; color: #999; margin-bottom: 8px; }
+.turn-label .round {
+  display: inline-block;
+  margin-right: 8px;
+  padding: 1px 7px;
+  border-radius: 999px;
+  background: #262b34;
+  color: #cfd5df;
+  font-weight: 700;
+  animation: bump 650ms var(--spring-jelly);
+}
+.turn-label .round.no-draws { background: #3a1b1e; color: #ffb3bc; }
 .turn-label .activated {
   display: inline-block;
   color: var(--gold);

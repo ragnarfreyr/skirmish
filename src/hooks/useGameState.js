@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { ROWS, HOME_ROWS, MAX_UNITS } from '../game/constants.js'
+import { ROWS, HOME_ROWS, MAX_UNITS, DRAW_ROUNDS } from '../game/constants.js'
 import { makeUnit, unitAt, bfsReachable, attackableTargets, refillMana, shotBlockedByTerrain } from '../game/rules.js'
 import { isTerrain } from '../game/terrain.js'
 import { createInitialState } from '../game/initialState.js'
@@ -15,7 +15,7 @@ export function useGameState() {
   const {
     units, terrain, life, phase, deployingPlayer, deployPlaced, decks, pendingCard,
     openingHand, selectedHandIndex,
-    deployedCount, hasDeployedThisTurn, deployCounter, currentPlayer,
+    deployedCount, hasDeployedThisTurn, deployCounter, currentPlayer, round,
     selectedId, gameOver, winText, message, gameId, lastEvent, activatedId, activatedName,
   } = state
 
@@ -47,7 +47,10 @@ export function useGameState() {
   const manaP2 = units.filter((u) => u.owner === 2).reduce((s, u) => s + u.mana, 0)
 
   const canDeploy =
-    phase === 'battle' && !hasDeployedThisTurn && !pendingCard && deployedCount[currentPlayer] < MAX_UNITS
+    phase === 'battle' && !hasDeployedThisTurn && !pendingCard && deployedCount[currentPlayer] < MAX_UNITS &&
+    round <= DRAW_ROUNDS
+  // Draws this player still has, counting this turn's if it hasn't been used.
+  const drawsLeft = Math.max(0, DRAW_ROUNDS - round + (hasDeployedThisTurn ? 0 : 1))
 
   // Units that can't act any more this turn because a different unit was activated.
   const lockedIds =
@@ -78,15 +81,20 @@ export function useGameState() {
   function endTurn() {
     if (pendingCard) return
     const nextPlayer = currentPlayer === 1 ? 2 : 1
+    const nextRound = nextPlayer === 1 ? round + 1 : round
+    let msg = `Player ${nextPlayer}'s turn. Activate one unit.`
+    if (nextRound === DRAW_ROUNDS && nextPlayer === 1) msg = `Round ${nextRound} — the last round to draw reinforcements.`
+    if (nextRound === DRAW_ROUNDS + 1 && nextPlayer === 1) msg = 'Reinforcements are over. Fight it out with what you have!'
     setState({
       ...state,
       units: refillMana(units, nextPlayer),
       currentPlayer: nextPlayer,
+      round: nextRound,
       selectedId: null,
       activatedId: null,
       activatedName: '',
       hasDeployedThisTurn: false,
-      message: `Player ${nextPlayer}'s turn. Activate one unit.`,
+      message: msg,
     })
   }
 
@@ -374,7 +382,7 @@ export function useGameState() {
     openingHand, selectedHandIndex,
     currentPlayer, selectedId, gameOver, winText, message,
     reach, targets, blockedTargets, placingZoneRows, canPlaceCard, manaP1, manaP2, canDeploy,
-    winOverlayDismissed, gameId, lastEvent, activatedId, activatedName, lockedIds, turnDone,
+    winOverlayDismissed, gameId, lastEvent, round, drawsLeft, activatedId, activatedName, lockedIds, turnDone,
     handleCellTap, drawForBattle, endTurn, resetGame, dismissWinOverlay, selectHandCard,
   }
 }

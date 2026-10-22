@@ -30,6 +30,7 @@ export function createInitialState() {
     hasDeployedThisTurn: false,
     deployCounter: 0,
     currentPlayer: 1,
+    round: 1, // battle round; ticks up each time play passes back to Player 1
     selectedId: null,
     activatedId: null, // i-go-you-go: the one unit that has acted this turn
     activatedName: '',
