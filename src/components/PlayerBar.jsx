@@ -2,7 +2,7 @@ import { useLayoutEffect, useRef } from 'react'
 import { animate, EASE } from '../fx/motion.js'
 import './PlayerBar.css'
 
-export default function PlayerBar({ player, name, life, mana, deckCount, active }) {
+export default function PlayerBar({ player, name, life, army, deckCount, active }) {
   const barRef = useRef(null)
   const prevLife = useRef(life)
 
@@ -43,7 +43,7 @@ export default function PlayerBar({ player, name, life, mana, deckCount, active 
       <span className="stats">
         {/* Keyed by value so each change remounts the number and replays its bump. */}
         <span className="num" key={`l${life}`}>❤ {life}</span>
-        <span className="num mv" key={`m${mana}`}>⚡ {mana}</span>
+        <span className="num mv" key={`a${army}`} title="Units on the board">♟ {army}</span>
         <span className="num dk" key={`d${deckCount}`}>🂠 {deckCount}</span>
       </span>
     </div>

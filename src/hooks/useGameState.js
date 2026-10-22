@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { ROWS, HOME_ROWS, MAX_UNITS, DRAW_ROUNDS } from '../game/constants.js'
-import { makeUnit, unitAt, bfsReachable, attackableTargets, refillMana, shotBlockedByTerrain } from '../game/rules.js'
+import { makeUnit, unitAt, bfsReachable, attackableTargets, refreshUnits, shotBlockedByTerrain } from '../game/rules.js'
 import { isTerrain } from '../game/terrain.js'
 import { createInitialState } from '../game/initialState.js'
 import { countHits } from '../game/dice.js'
@@ -17,7 +17,7 @@ export function useGameState() {
     units, terrain, life, phase, deployingPlayer, deployPlaced, decks, pendingCard,
     openingHand, selectedHandIndex,
     deployedCount, hasDeployedThisTurn, deployCounter, currentPlayer, round,
-    selectedId, gameOver, winText, message, gameId, lastEvent, activatedId, activatedName,
+    selectedId, inspectId, gameOver, winText, message, gameId, lastEvent, activatedId, activatedName,
     roll, resolving,
   } = state
 
@@ -35,7 +35,7 @@ export function useGameState() {
   if (selectedUnit && selectedUnit.owner === currentPlayer && !pendingCard && canAct(selectedUnit)) {
     reach = bfsReachable(units, selectedUnit, terrain)
     targets = attackableTargets(units, selectedUnit, terrain)
-    if (selectedUnit.mana >= 1) {
+    if (!selectedUnit.attacked) {
       blockedTargets = units.filter(
         (t) => t.owner !== selectedUnit.owner && shotBlockedByTerrain(selectedUnit, t, terrain),
       )
@@ -45,8 +45,10 @@ export function useGameState() {
     phase === 'deploy' ? HOME_ROWS[deployingPlayer] : pendingCard ? HOME_ROWS[currentPlayer] : []
   const canPlaceCard = phase === 'deploy' ? selectedHandIndex !== null : !!pendingCard
 
-  const manaP1 = units.filter((u) => u.owner === 1).reduce((s, u) => s + u.mana, 0)
-  const manaP2 = units.filter((u) => u.owner === 2).reduce((s, u) => s + u.mana, 0)
+  const armyP1 = units.filter((u) => u.owner === 1 && !u.dying).length
+  const armyP2 = units.filter((u) => u.owner === 2 && !u.dying).length
+  // The unit whose stat card is open (it may have just died).
+  const inspectUnit = units.find((u) => u.id === inspectId) || null
 
   const canDeploy =
     phase === 'battle' && !hasDeployedThisTurn && !pendingCard && deployedCount[currentPlayer] < MAX_UNITS &&
@@ -59,11 +61,13 @@ export function useGameState() {
     phase === 'battle' && activatedId
       ? units.filter((u) => u.owner === currentPlayer && u.id !== activatedId).map((u) => u.id)
       : []
-  // Nothing useful left to do: the activated unit is out of mana (or dead) and no deploy is pending.
+  // Nothing useful left to do: the activated unit can't move or attack any more (or is dead),
+  // and no deploy is pending.
   const activatedUnit = units.find((u) => u.id === activatedId)
   const turnDone =
     phase === 'battle' && !gameOver && !resolving && !!activatedId && !pendingCard && !canDeploy &&
-    (!activatedUnit || activatedUnit.mana === 0)
+    (!activatedUnit ||
+      (activatedUnit.move === 0 && attackableTargets(units, activatedUnit, terrain).length === 0))
 
   // ---- actions ----
   function resetGame() {
@@ -89,7 +93,8 @@ export function useGameState() {
     if (nextRound === DRAW_ROUNDS + 1 && nextPlayer === 1) msg = 'Reinforcements are over. Fight it out with what you have!'
     setState({
       ...state,
-      units: refillMana(units, nextPlayer),
+      units: refreshUnits(units, nextPlayer),
+      inspectId: null,
       currentPlayer: nextPlayer,
       round: nextRound,
       selectedId: null,
@@ -145,7 +150,7 @@ export function useGameState() {
       } else {
         newPhase = 'battle'
         newCurrentPlayer = 1
-        newUnits = refillMana(newUnits, 1)
+        newUnits = refreshUnits(newUnits, 1)
         newOpeningHand = []
         newMessage = "Battle begins! Player 1's turn — activate one unit."
       }
@@ -178,7 +183,8 @@ export function useGameState() {
     const newCounter = deployCounter + 1
     const newUnit = {
       ...makeUnit(`p${currentPlayer}-${card.key}-${newCounter}`, currentPlayer, card, row, col),
-      mana: 0,
+      move: 0,
+      attacked: true,
       sick: true,
     }
     const newCount = deployedCount[currentPlayer] + 1
@@ -195,7 +201,7 @@ export function useGameState() {
 
   function performMove(unit, row, col, cost) {
     let newUnits = units.map((u) =>
-      u.id === unit.id ? { ...u, row, col, mana: u.mana - cost } : u,
+      u.id === unit.id ? { ...u, row, col, move: u.move - cost } : u,
     )
     let newLife = life
     let msg = message
@@ -228,7 +234,8 @@ export function useGameState() {
   function performAttack(attacker, defender) {
     setState({
       ...state,
-      units: units.map((u) => (u.id === attacker.id ? { ...u, mana: u.mana - 1 } : u)),
+      units: units.map((u) => (u.id === attacker.id ? { ...u, attacked: true } : u)),
+      inspectId: null,
       activatedId: attacker.id,
       activatedName: attacker.name,
       resolving: true,
@@ -247,8 +254,31 @@ export function useGameState() {
     setTimeout(() => setState(afterBlow), DEATH_CLEANUP_MS)
   }
 
+  // Every board tap does its normal job, then decides which unit's stat card is open:
+  // tapping any unit (yours or the enemy's) shows its card; tapping away closes it.
   function handleCellTap(row, col) {
     if (gameOver || resolving) return
+    const clicked = unitAt(units, row, col)
+    playTap(row, col)
+    setState((prev) => {
+      if (prev.resolving) return prev // an attack started; the dice take over the screen
+      let inspect = null
+      if (clicked) {
+        const deselectedOwn =
+          prev.phase === 'battle' && clicked.owner === prev.currentPlayer && prev.selectedId !== clicked.id
+        inspect = deselectedOwn ? null : clicked.id
+      } else if (prev.selectedId && prev.selectedId === prev.inspectId) {
+        inspect = prev.inspectId // the inspected unit just moved: keep its card open
+      }
+      return prev.inspectId === inspect ? prev : { ...prev, inspectId: inspect }
+    })
+  }
+
+  function closeInspect() {
+    setState((prev) => ({ ...prev, inspectId: null }))
+  }
+
+  function playTap(row, col) {
 
     if (phase === 'deploy') {
       if (selectedHandIndex === null) return
@@ -289,7 +319,8 @@ export function useGameState() {
             return
           }
           let msg = `${selected.name} is out of range to attack ${clicked.name}.`
-          if (selected.mana < 1) msg = `${selected.name} needs 1 mana to attack — none left this turn.`
+          if (selected.sick) msg = `${selected.name} just arrived and can't act until next turn.`
+          else if (selected.attacked) msg = `${selected.name} has already attacked this turn.`
           else if (shotBlockedByTerrain(selected, clicked, terrain))
             msg = `Terrain blocks ${selected.name}'s line of sight to ${clicked.name}.`
           setState({ ...state, message: msg })
@@ -312,7 +343,7 @@ export function useGameState() {
           setState({ ...state, message: 'Terrain is impassable — units have to go around it.' })
           return
         }
-        setState({ ...state, message: `Not enough mana for ${selected.name} to reach that tile.` })
+        setState({ ...state, message: `${selected.name} can't move that far (${selected.move} ${selected.move === 1 ? 'square' : 'squares'} left).` })
         return
       }
     }
@@ -332,10 +363,10 @@ export function useGameState() {
     units, terrain, life, phase, deployingPlayer, deployPlaced, decks, pendingCard,
     openingHand, selectedHandIndex,
     currentPlayer, selectedId, gameOver, winText, message,
-    reach, targets, blockedTargets, placingZoneRows, canPlaceCard, manaP1, manaP2, canDeploy,
+    reach, targets, blockedTargets, placingZoneRows, canPlaceCard, armyP1, armyP2, canDeploy, inspectUnit,
     winOverlayDismissed, gameId, lastEvent, round, drawsLeft, activatedId, activatedName, lockedIds, turnDone,
     roll, resolving,
-    handleCellTap, drawForBattle, endTurn, resetGame, dismissWinOverlay, selectHandCard, resolveRoll,
+    handleCellTap, drawForBattle, endTurn, resetGame, dismissWinOverlay, selectHandCard, resolveRoll, closeInspect,
   }
 }
 

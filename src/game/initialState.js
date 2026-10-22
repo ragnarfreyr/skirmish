@@ -1,14 +1,16 @@
-import { buildDeck, HERO_DEFS } from './cards.js'
+import { buildDeck, rollUnitStats, HERO_NAMES } from './cards.js'
 import { makeUnit } from './rules.js'
 import { generateTerrain } from './terrain.js'
 
 export function createInitialState() {
+  // Fresh stats every game, shared by both sides so neither starts ahead.
+  const stats = rollUnitStats()
   const units = [
-    makeUnit('p1-hero', 1, HERO_DEFS[1], 5, 0, true),
-    makeUnit('p2-hero', 2, HERO_DEFS[2], 0, 0, true),
+    makeUnit('p1-hero', 1, { ...stats.hero, name: HERO_NAMES[1] }, 5, 0, true),
+    makeUnit('p2-hero', 2, { ...stats.hero, name: HERO_NAMES[2] }, 0, 0, true),
   ]
 
-  const decks = { 1: buildDeck(), 2: buildDeck() }
+  const decks = { 1: buildDeck(stats.units), 2: buildDeck(stats.units) }
   const deck1 = decks[1]
   const openingHand = deck1.slice(0, 3)
   decks[1] = deck1.slice(3)
@@ -35,10 +37,11 @@ export function createInitialState() {
     currentPlayer: 1,
     round: 1, // battle round; ticks up each time play passes back to Player 1
     selectedId: null,
+    inspectId: null, // unit whose stat card is showing
     activatedId: null, // i-go-you-go: the one unit that has acted this turn
     activatedName: '',
     gameOver: false,
     winText: '',
-    message: 'Player 1: tap a unit below, then tap a tile in your zone to deploy it.',
+    message: 'Unit stats are rolled fresh this game — tap any unit on the board to see them. Player 1: deploy a unit.',
   }
 }

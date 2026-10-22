@@ -3,6 +3,7 @@ import { ROWS, COLS } from '../game/constants.js'
 import { unitAt } from '../game/rules.js'
 import { animate, buzz, EASE, moveDuration } from '../fx/motion.js'
 import UnitChip from './UnitChip.jsx'
+import UnitInfo from './UnitInfo.jsx'
 import './Board.css'
 
 // Melee: wind up, lunge in, bonk. Ranged: recoil and fire a bolt.
@@ -13,6 +14,7 @@ const GRID_GAP = 3 // keep in sync with --gap in Board.css
 
 export default function Board({
   units, terrain, reach, targets, blockedTargets, canPlaceCard, placingZoneRows, selectedId, activatedId, lockedIds, onCellTap, lastEvent,
+  inspectUnit, onCloseInspect,
 }) {
   const shakeRef = useRef(null)
   const fxRef = useRef(null)
@@ -281,6 +283,7 @@ export default function Board({
           ))}
           <div className="fx-layer" ref={fxRef} />
         </div>
+        <UnitInfo unit={inspectUnit} onClose={onCloseInspect} />
       </div>
     </div>
   )

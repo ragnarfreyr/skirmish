@@ -15,10 +15,10 @@ export default function App() {
     life, phase, deployingPlayer, deployPlaced, decks, pendingCard,
     openingHand, selectedHandIndex,
     currentPlayer, selectedId, gameOver, winText, message,
-    units, terrain, reach, targets, blockedTargets, placingZoneRows, canPlaceCard, manaP1, manaP2, canDeploy,
+    units, terrain, reach, targets, blockedTargets, placingZoneRows, canPlaceCard, armyP1, armyP2, canDeploy, inspectUnit,
     winOverlayDismissed, gameId, lastEvent, round, drawsLeft, activatedId, activatedName, lockedIds, turnDone,
     roll, resolving,
-    handleCellTap, drawForBattle, endTurn, resetGame, dismissWinOverlay, selectHandCard, resolveRoll,
+    handleCellTap, drawForBattle, endTurn, resetGame, dismissWinOverlay, selectHandCard, resolveRoll, closeInspect,
   } = useGameState()
 
   const activeDeckPlayer = phase === 'deploy' ? deployingPlayer : currentPlayer
@@ -29,7 +29,7 @@ export default function App() {
       <h1>Skirmish</h1>
 
       <PlayerBar
-        player={2} name="Archmage (P2)" life={life[2]} mana={manaP2} deckCount={decks[2].length}
+        player={2} name="Archmage (P2)" life={life[2]} army={armyP2} deckCount={decks[2].length}
         active={!gameOver && activeDeckPlayer === 2}
       />
 
@@ -47,10 +47,12 @@ export default function App() {
         activatedId={activatedId}
         lockedIds={lockedIds}
         onCellTap={handleCellTap}
+        inspectUnit={inspectUnit}
+        onCloseInspect={closeInspect}
       />
 
       <PlayerBar
-        player={1} name="Warlord (P1)" life={life[1]} mana={manaP1} deckCount={decks[1].length}
+        player={1} name="Warlord (P1)" life={life[1]} army={armyP1} deckCount={decks[1].length}
         active={!gameOver && activeDeckPlayer === 1}
       />
 

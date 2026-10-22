@@ -10,10 +10,10 @@ export default function PendingCardPanel({ pendingCard }) {
       <div className="deploy-card" key={pendingCard.uid ?? pendingCard.name}>
         <div className="dname">
           {pendingCard.name}
-          {pendingCard.ranged ? ' (RNG)' : ''}
+          {pendingCard.ranged ? ` (RNG ${pendingCard.range})` : ''}
         </div>
         <div className="dstats">
-          <span className="d-mana">⚡{pendingCard.mana}</span>
+          <span className="d-mana">➜{pendingCard.move}</span>
           <span>
             ⚔{pendingCard.attacks}
             <span className="to-hit">{pendingCard.hit}+</span>

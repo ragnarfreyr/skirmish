@@ -1,4 +1,6 @@
 .board-shake {
+  position: relative;
+  z-index: 5; /* lets the unit stat card float over the player bars */
   max-width: 480px;
   margin: 0 auto;
   will-change: transform;

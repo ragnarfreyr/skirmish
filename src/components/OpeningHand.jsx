@@ -20,10 +20,10 @@ export default function OpeningHand({ hand, selectedIndex, onSelect, player }) {
             >
               <div className="hcname">
                 {card.name}
-                {card.ranged ? ' (RNG)' : ''}
+                {card.ranged ? ` (RNG ${card.range})` : ''}
               </div>
               <div className="hcstats">
-                <span className="hc-mana">⚡{card.mana}</span>
+                <span className="hc-mana">➜{card.move}</span>
                 <span>
                   ⚔{card.attacks}
                   <span className="to-hit">{card.hit}+</span>

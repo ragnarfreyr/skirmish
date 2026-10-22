@@ -39,10 +39,10 @@ export default function DeckViewerButton({ deck, label }) {
                 <div className="deck-row" key={card.name} style={{ '--i': i }}>
                   <span className="deck-row-name">
                     {card.name}
-                    {card.ranged ? ' (RNG)' : ''}
+                    {card.ranged ? ` (range ${card.range})` : ''}
                   </span>
                   <span className="deck-row-stats">
-                    {card.mana} mana • {card.attacks} dice, hit {card.hit}+ / {card.hp} hp
+                    move {card.move} • {card.attacks} dice, hit {card.hit}+ • {card.hp} hp
                   </span>
                   <span className="deck-row-count">×{card.count}</span>
                 </div>

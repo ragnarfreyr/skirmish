@@ -68,7 +68,7 @@ export default function UnitChip({ unit, selected, activated, locked, introDelay
   if (unit.isHero) classes.push('hero')
   if (unit.sick) classes.push('sick')
   if (unit.dying) classes.push('dying')
-  if (unit.mana === 0 && !unit.sick) classes.push('spent')
+  if (unit.move === 0 && unit.attacked && !unit.sick) classes.push('spent')
   if (locked) classes.push('locked')
 
   return (
@@ -95,11 +95,11 @@ export default function UnitChip({ unit, selected, activated, locked, introDelay
               {Math.max(0, unit.hp)}
             </span>
           </div>
-          <div className="mana" key={`mana-${unit.mana}`}>
-            <span className="icon">⚡</span>
-            {unit.mana}
+          <div className="mana" key={`move-${unit.move}`} title="Moves left">
+            <span className="icon">➜</span>
+            {unit.move}
           </div>
-          {unit.ranged && <div className="ranged-tag">RNG</div>}
+          {unit.ranged && <div className="ranged-tag">RNG {unit.range}</div>}
           {unit.sick && <div className="zzz">z</div>}
           {activated && <div className="active-tag">ACTIVE</div>}
         </div>
