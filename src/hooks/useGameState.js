@@ -267,8 +267,8 @@ export function useGameState() {
         const deselectedOwn =
           prev.phase === 'battle' && clicked.owner === prev.currentPlayer && prev.selectedId !== clicked.id
         inspect = deselectedOwn ? null : clicked.id
-      } else if (prev.selectedId && prev.selectedId === prev.inspectId) {
-        inspect = prev.inspectId // the inspected unit just moved: keep its card open
+      } else if (prev.inspectId && unitAt(prev.units, row, col)?.id === prev.inspectId) {
+        inspect = prev.inspectId // the inspected unit just moved onto this tile: keep its card open
       }
       return prev.inspectId === inspect ? prev : { ...prev, inspectId: inspect }
     })
