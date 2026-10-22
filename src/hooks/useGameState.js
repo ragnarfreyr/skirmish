@@ -16,15 +16,21 @@ export function useGameState() {
     units, terrain, life, phase, deployingPlayer, deployPlaced, decks, pendingCard,
     openingHand, selectedHandIndex,
     deployedCount, hasDeployedThisTurn, deployCounter, currentPlayer,
-    selectedId, gameOver, winText, message, gameId, lastEvent,
+    selectedId, gameOver, winText, message, gameId, lastEvent, activatedId, activatedName,
   } = state
+
+  // I-go-you-go: a player activates one unit per turn. Until they move or attack,
+  // any of their units may act; after that, only the activated one can.
+  const canAct = (unit) => !activatedId || unit.id === activatedId
+  const lockedMessage = () =>
+    `You've activated ${activatedName} this turn — only it can act. End your turn to pass to the other side.`
 
   // ---- derived / computed values for rendering ----
   const selectedUnit = phase === 'battle' ? units.find((u) => u.id === selectedId) : null
   let reach = []
   let targets = []
   let blockedTargets = [] // in range, but terrain is in the way
-  if (selectedUnit && selectedUnit.owner === currentPlayer && !pendingCard) {
+  if (selectedUnit && selectedUnit.owner === currentPlayer && !pendingCard && canAct(selectedUnit)) {
     reach = bfsReachable(units, selectedUnit, terrain)
     targets = attackableTargets(units, selectedUnit, terrain)
     if (selectedUnit.mana >= 1) {
@@ -42,6 +48,17 @@ export function useGameState() {
 
   const canDeploy =
     phase === 'battle' && !hasDeployedThisTurn && !pendingCard && deployedCount[currentPlayer] < MAX_UNITS
+
+  // Units that can't act any more this turn because a different unit was activated.
+  const lockedIds =
+    phase === 'battle' && activatedId
+      ? units.filter((u) => u.owner === currentPlayer && u.id !== activatedId).map((u) => u.id)
+      : []
+  // Nothing useful left to do: the activated unit is out of mana (or dead) and no deploy is pending.
+  const activatedUnit = units.find((u) => u.id === activatedId)
+  const turnDone =
+    phase === 'battle' && !gameOver && !!activatedId && !pendingCard && !canDeploy &&
+    (!activatedUnit || activatedUnit.mana === 0)
 
   // ---- actions ----
   function resetGame() {
@@ -66,8 +83,10 @@ export function useGameState() {
       units: refillMana(units, nextPlayer),
       currentPlayer: nextPlayer,
       selectedId: null,
+      activatedId: null,
+      activatedName: '',
       hasDeployedThisTurn: false,
-      message: `Player ${nextPlayer}'s turn. Mana refreshed.`,
+      message: `Player ${nextPlayer}'s turn. Activate one unit.`,
     })
   }
 
@@ -121,7 +140,7 @@ export function useGameState() {
         newCurrentPlayer = 1
         newUnits = refillMana(newUnits, 1)
         newOpeningHand = []
-        newMessage = "Battle begins! Player 1's turn."
+        newMessage = "Battle begins! Player 1's turn — activate one unit."
       }
     }
 
@@ -187,7 +206,16 @@ export function useGameState() {
       } side takes 4 damage. (Life is a pressure score — only defeating the hero wins.)`
       event = { id: Math.random(), type: 'breach', unitId: unit.id, row, col, dmg: 4, distance: cost }
     }
-    setState({ ...state, units: newUnits, life: newLife, message: msg, lastEvent: event })
+    if (msg === message) msg = `${unit.name} moved. It's your activated unit this turn.`
+    setState({
+      ...state,
+      units: newUnits,
+      life: newLife,
+      message: msg,
+      lastEvent: event,
+      activatedId: unit.id,
+      activatedName: unit.name,
+    })
   }
 
   function performAttack(attacker, defender) {
@@ -213,6 +241,8 @@ export function useGameState() {
       ...state,
       units: newUnits,
       message: `${attacker.name}${attacker.ranged ? ' shoots ' : ' attacks '}${defender.name}.`,
+      activatedId: attacker.id,
+      activatedName: attacker.name,
       // Everything the board needs to choreograph the clash (lunge, projectile, numbers, shake).
       lastEvent: {
         id: Math.random(),
@@ -276,6 +306,17 @@ export function useGameState() {
     const clicked = unitAt(units, row, col)
     const selected = units.find((u) => u.id === selectedId)
 
+    // A locked unit can still be selected to look at, but tapping a tile or enemy
+    // with it just explains the rule.
+    if (selected && selected.owner === currentPlayer && !canAct(selected)) {
+      if (clicked && clicked.owner === currentPlayer) {
+        setState({ ...state, selectedId: clicked.id === selected.id ? null : clicked.id })
+        return
+      }
+      setState({ ...state, message: lockedMessage() })
+      return
+    }
+
     if (selected && selected.owner === currentPlayer) {
       if (clicked) {
         if (clicked.id === selected.id) {
@@ -295,7 +336,11 @@ export function useGameState() {
           setState({ ...state, message: msg })
           return
         }
-        setState({ ...state, selectedId: clicked.id })
+        setState({
+          ...state,
+          selectedId: clicked.id,
+          message: canAct(clicked) ? message : lockedMessage(),
+        })
         return
       } else {
         const currentReach = bfsReachable(units, selected, terrain)
@@ -314,7 +359,11 @@ export function useGameState() {
     }
 
     if (clicked && clicked.owner === currentPlayer) {
-      setState({ ...state, selectedId: clicked.id })
+      setState({
+        ...state,
+        selectedId: clicked.id,
+        message: canAct(clicked) ? message : lockedMessage(),
+      })
       return
     }
     setState({ ...state, selectedId: null })
@@ -325,7 +374,7 @@ export function useGameState() {
     openingHand, selectedHandIndex,
     currentPlayer, selectedId, gameOver, winText, message,
     reach, targets, blockedTargets, placingZoneRows, canPlaceCard, manaP1, manaP2, canDeploy,
-    winOverlayDismissed, gameId, lastEvent,
+    winOverlayDismissed, gameId, lastEvent, activatedId, activatedName, lockedIds, turnDone,
     handleCellTap, drawForBattle, endTurn, resetGame, dismissWinOverlay, selectHandCard,
   }
 }

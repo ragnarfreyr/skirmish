@@ -1,4 +1,10 @@
 .turn-label { text-align: center; font-size: 12px; color: #999; margin-bottom: 8px; }
+.turn-label .activated {
+  display: inline-block;
+  color: var(--gold);
+  font-weight: 700;
+  animation: bump 650ms var(--spring-jelly);
+}
 .turn-label .count {
   display: inline-block;
   color: var(--gold);

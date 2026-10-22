@@ -3,7 +3,7 @@ import GameMenu from './GameMenu.jsx'
 import './Controls.css'
 
 export default function Controls({
-  phase, canDeploy, hasPendingCard, onDraw, onEndTurn, onReset, deck, deckOwnerLabel,
+  phase, canDeploy, hasPendingCard, turnDone, onDraw, onEndTurn, onReset, deck, deckOwnerLabel,
 }) {
   return (
     <div className="controls">
@@ -13,7 +13,7 @@ export default function Controls({
         </button>
       )}
       {phase === 'battle' && (
-        <button onClick={onEndTurn} disabled={hasPendingCard} className="end-turn pop-in">
+        <button onClick={onEndTurn} disabled={hasPendingCard} className={`end-turn pop-in${turnDone ? ' nudge' : ''}`}>
           End turn
         </button>
       )}

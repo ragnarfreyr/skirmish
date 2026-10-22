@@ -7,7 +7,7 @@ import './UnitChip.css'
 //   .unit-slot  — where on the grid it is (springs between tiles)
 //   .unit-bob   — selection lift + idle breathing
 //   .unit       — one-shot squash & stretch (drop-in, hop, lunge, hit)
-export default function UnitChip({ unit, selected, introDelay = 0, registerRef }) {
+export default function UnitChip({ unit, selected, activated, locked, introDelay = 0, registerRef }) {
   const unitRef = useRef(null)
   const prevPos = useRef({ row: unit.row, col: unit.col })
 
@@ -69,6 +69,7 @@ export default function UnitChip({ unit, selected, introDelay = 0, registerRef }
   if (unit.sick) classes.push('sick')
   if (unit.dying) classes.push('dying')
   if (unit.mana === 0 && !unit.sick) classes.push('spent')
+  if (locked) classes.push('locked')
 
   return (
     <div
@@ -99,6 +100,7 @@ export default function UnitChip({ unit, selected, introDelay = 0, registerRef }
           </div>
           {unit.ranged && <div className="ranged-tag">RNG</div>}
           {unit.sick && <div className="zzz">z</div>}
+          {activated && <div className="active-tag">ACTIVE</div>}
         </div>
       </div>
     </div>

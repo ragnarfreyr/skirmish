@@ -1,6 +1,6 @@
 import './StatusBar.css'
 
-export default function StatusBar({ phase, deployingPlayer, deployPlaced, currentPlayer, message }) {
+export default function StatusBar({ phase, deployingPlayer, deployPlaced, currentPlayer, activatedName, message }) {
   return (
     <>
       <div className="turn-label">
@@ -13,7 +13,16 @@ export default function StatusBar({ phase, deployingPlayer, deployPlaced, curren
             placed
           </>
         ) : (
-          `Player ${currentPlayer}'s turn`
+          <>
+            Player {currentPlayer}'s turn —{' '}
+            {activatedName ? (
+              <span className="activated" key={activatedName}>
+                {activatedName} activated
+              </span>
+            ) : (
+              'activate one unit'
+            )}
+          </>
         )}
       </div>
       <div className="panel">

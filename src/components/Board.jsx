@@ -12,7 +12,7 @@ const RETALIATION_DELAY_MS = 110
 const GRID_GAP = 3 // keep in sync with --gap in Board.css
 
 export default function Board({
-  units, terrain, reach, targets, blockedTargets, canPlaceCard, placingZoneRows, selectedId, onCellTap, lastEvent,
+  units, terrain, reach, targets, blockedTargets, canPlaceCard, placingZoneRows, selectedId, activatedId, lockedIds, onCellTap, lastEvent,
 }) {
   const shakeRef = useRef(null)
   const fxRef = useRef(null)
@@ -268,6 +268,8 @@ export default function Board({
               key={u.id}
               unit={u}
               selected={u.id === selectedId}
+              activated={u.id === activatedId}
+              locked={lockedIds.includes(u.id)}
               introDelay={introDone.current ? 0 : 300 + terrain.length * 90 + i * 140}
               registerRef={registerRef}
             />

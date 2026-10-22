@@ -31,6 +31,8 @@ export function createInitialState() {
     deployCounter: 0,
     currentPlayer: 1,
     selectedId: null,
+    activatedId: null, // i-go-you-go: the one unit that has acted this turn
+    activatedName: '',
     gameOver: false,
     winText: '',
     message: 'Player 1: tap a unit below, then tap a tile in your zone to deploy it.',

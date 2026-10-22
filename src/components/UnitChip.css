@@ -121,3 +121,35 @@
   40% { transform: scale(1.25) rotate(-4deg); filter: brightness(1.6); opacity: 1; }
   100% { transform: scale(0) rotate(40deg); filter: brightness(1); opacity: 0; }
 }
+
+/* I-go-you-go: once another unit has been activated, the rest of the side sits
+   this turn out. They shrink back a little and go grey. */
+.unit.locked {
+  filter: grayscale(0.85) brightness(0.65);
+  transform: scale(0.9);
+  transition: filter 300ms, transform 450ms var(--spring-jelly);
+}
+.unit:not(.locked) { transition: filter 300ms, transform 450ms var(--spring-jelly), opacity 300ms; }
+
+.unit .active-tag {
+  position: absolute;
+  bottom: -7px;
+  left: 50%;
+  translate: -50% 0;
+  padding: 1px 4px;
+  border-radius: 4px;
+  background: var(--gold);
+  color: #14161a;
+  font-family: var(--font-display);
+  font-size: 7.5px;
+  letter-spacing: 0.4px;
+  box-shadow: 0 2px 0 var(--gold-deep);
+  z-index: 2;
+  animation: tagPop 600ms var(--spring-jelly);
+}
+@keyframes tagPop {
+  from { transform: scale(0) rotate(-12deg); }
+  to { transform: scale(1) rotate(0); }
+}
+/* The ranged tag moves aside when the ACTIVE tag needs the bottom edge. */
+.unit:has(.active-tag) .ranged-tag { bottom: auto; top: -4px; left: -4px; }
