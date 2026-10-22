@@ -24,9 +24,7 @@ export default function App() {
 
   return (
     <div className="app">
-      <h1>
-        Skirmish <span className="h1-sub">pass &amp; play prototype</span>
-      </h1>
+      <h1>Skirmish</h1>
 
       <PlayerBar
         player={2} name="Archmage (P2)" life={life[2]} mana={manaP2} deckCount={decks[2].length}

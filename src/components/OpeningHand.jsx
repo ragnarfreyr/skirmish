@@ -5,7 +5,6 @@ export default function OpeningHand({ hand, selectedIndex, onSelect, player }) {
 
   return (
     <div className="opening-hand">
-      <div className="hand-label">Tap a unit, then tap a tile in your zone to deploy it:</div>
       {/* Keyed by player so a fresh hand is dealt in when Player 2 takes over. */}
       <div className="hand-cards" key={player}>
         {hand.map((card, i) => {

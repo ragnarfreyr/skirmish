@@ -1,5 +1,4 @@
 .opening-hand { max-width: 480px; margin: 12px auto 0; }
-.hand-label { font-size: 12px; color: #999; margin-bottom: 8px; text-align: center; }
 .hand-cards { display: flex; gap: 8px; padding-top: 8px; }
 
 .hand-card {
